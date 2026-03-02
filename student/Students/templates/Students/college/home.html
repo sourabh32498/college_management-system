@@ -1,0 +1,109 @@
+{% extends 'Students/base.html' %}
+
+{% block title %}{{ college_name }} | College Website{% endblock %}
+
+{% block content %}
+<section class="app-hero mb-4">
+  <div class="row g-4 align-items-center">
+    <div class="col-lg-8">
+      <h1 class="display-6 fw-bold mb-2">{{ college_name }}</h1>
+      <p class="lead mb-3">{{ tagline }}</p>
+      <div class="d-flex gap-2 flex-wrap">
+        <a class="btn btn-light fw-semibold" href="{% url 'students:college_admissions' %}">Apply for Admission</a>
+        <a class="btn btn-light fw-semibold" href="{% url 'students:college_results' %}">Online Results</a>
+        <a class="btn btn-outline-light" href="{% url 'students:college_courses' %}">Explore Programs</a>
+        <a class="btn btn-outline-light" href="{% url 'students:college_contact' %}">Contact Campus</a>
+      </div>
+    </div>
+    <div class="col-lg-4">
+      <div class="section-panel p-3">
+        <h2 class="h6 mb-2">Quick Links</h2>
+        <div class="d-grid gap-2">
+          <a class="btn btn-sm btn-outline-primary" href="{% url 'students:college_departments' %}">Departments</a>
+          <a class="btn btn-sm btn-outline-primary" href="{% url 'students:college_faculty' %}">Faculty</a>
+          <a class="btn btn-sm btn-outline-primary" href="{% url 'students:college_results' %}">Online Results</a>
+          <a class="btn btn-sm btn-outline-primary" href="{% url 'students:college_contact' %}">Admission Enquiry</a>
+        </div>
+      </div>
+    </div>
+  </div>
+</section>
+
+<div class="row g-3 mb-4">
+  {% for stat in hero_stats %}
+  <div class="col-6 col-lg-3">
+    <article class="metric-card">
+      <small class="text-uppercase">{{ stat.label }}</small>
+      <div class="metric-value">{{ stat.value }}</div>
+    </article>
+  </div>
+  {% endfor %}
+</div>
+
+<div class="row g-3 mb-4">
+  <div class="col-lg-6">
+    <div class="card h-100">
+      <div class="card-header bg-white"><h2 class="h6 mb-0">Latest Notices</h2></div>
+      <div class="card-body">
+        <ul class="mb-0">
+          {% for notice in notices %}
+          <li class="mb-2">{{ notice }}</li>
+          {% endfor %}
+        </ul>
+      </div>
+    </div>
+  </div>
+  <div class="col-lg-6">
+    <div class="card h-100">
+      <div class="card-header bg-white"><h2 class="h6 mb-0">Upcoming Events</h2></div>
+      <div class="card-body">
+        <ul class="mb-0">
+          {% for event in events %}
+          <li class="mb-2"><strong>{{ event.name }}</strong> - {{ event.date }}</li>
+          {% endfor %}
+        </ul>
+      </div>
+    </div>
+  </div>
+</div>
+
+<div class="row g-3">
+  <div class="col-lg-8">
+    <div class="card">
+      <div class="card-header bg-white"><h2 class="h6 mb-0">Programs Offered</h2></div>
+      <div class="table-responsive">
+        <table class="table align-middle mb-0">
+          <thead class="table-light">
+            <tr>
+              <th>Program</th>
+              <th>Level</th>
+              <th>Duration</th>
+            </tr>
+          </thead>
+          <tbody>
+            {% for p in programs %}
+            <tr>
+              <td>{{ p.name }}</td>
+              <td>{{ p.level }}</td>
+              <td>{{ p.duration }}</td>
+            </tr>
+            {% endfor %}
+          </tbody>
+        </table>
+      </div>
+    </div>
+  </div>
+  <div class="col-lg-4">
+    <div class="card h-100">
+      <div class="card-header bg-white"><h2 class="h6 mb-0">Placement Partners</h2></div>
+      <div class="card-body">
+        <div class="d-flex flex-wrap gap-2">
+          {% for company in placement_partners %}
+          <span class="badge text-bg-primary">{{ company }}</span>
+          {% endfor %}
+        </div>
+      </div>
+    </div>
+  </div>
+</div>
+{% endblock %}

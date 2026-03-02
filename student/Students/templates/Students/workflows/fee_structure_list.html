@@ -1,0 +1,57 @@
+{% extends 'Students/base.html' %}
+
+{% block title %}Fee Structures | Student Management{% endblock %}
+
+{% block content %}
+<section class="page-header">
+  <div><h1 class="page-title">Fee Structures</h1><p class="page-subtitle">Configure fee plans by course and academic year.</p></div>
+  <a href="{% url 'students:fee_structure_add' %}" class="btn btn-primary">New Fee Structure</a>
+</section>
+<div class="card">
+  <div class="table-responsive">
+    <table class="table align-middle mb-0">
+      <thead class="table-light">
+        <tr>
+          <th>Name</th>
+          <th>Course</th>
+          <th>Academic Year</th>
+          <th>Admission Fee</th>
+          <th>First Sem</th>
+          <th>Second Sem</th>
+          <th>Third Sem</th>
+          <th>Fourth Sem</th>
+          <th>Total Amount</th>
+          <th>Status</th>
+        </tr>
+      </thead>
+      <tbody>
+        {% for row in display_structures %}
+        <tr>
+          <td>{{ row.structure.name }}</td>
+          <td>{{ row.structure.course }}</td>
+          <td>{{ row.structure.academic_year }}</td>
+          <td>{{ row.admission_fee|floatformat:2 }}</td>
+          <td>{{ row.first_sem|floatformat:2 }}</td>
+          <td>{{ row.second_sem|floatformat:2 }}</td>
+          <td>{{ row.third_sem|floatformat:2 }}</td>
+          <td>{{ row.fourth_sem|floatformat:2 }}</td>
+          <td>{{ row.structure.total_amount|floatformat:2 }}</td>
+          <td>
+            {% if row.structure.is_active %}
+            <span class="badge text-bg-success">Active</span>
+            {% else %}
+            <span class="badge text-bg-secondary">Inactive</span>
+            {% endif %}
+          </td>
+        </tr>
+        {% empty %}
+        <tr>
+          <td colspan="10" class="text-center py-4 text-body-secondary">No fee structures found.</td>
+        </tr>
+        {% endfor %}
+      </tbody>
+    </table>
+  </div>
+</div>
+<p class="mt-2 text-body-secondary small mb-0">Note: Admission and semester fees are split course-wise; values are not identical across courses.</p>
+{% endblock %}

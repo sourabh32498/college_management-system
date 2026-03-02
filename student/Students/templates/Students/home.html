@@ -1,0 +1,70 @@
+{% extends 'Students/base.html' %}
+
+{% block title %}Home | Student Management{% endblock %}
+
+{% block content %}
+<section class="app-hero mb-4">
+  <div class="row align-items-center g-4">
+    <div class="col-lg-8">
+      <h1 class="display-6 fw-bold mb-2">Professional Student Operations Platform</h1>
+      <p class="lead mb-3">Centralized records, academic workflows, finance tracking, and timetable operations in one modern admin system.</p>
+      <div class="d-flex gap-2 flex-wrap">
+        {% if user.is_authenticated %}
+        <a href="{% url 'students:dashboard' %}" class="btn btn-light fw-semibold">Open Dashboard</a>
+        <a href="{% url 'students:list' %}" class="btn btn-outline-light">Browse Students</a>
+        {% else %}
+        <a href="{% url 'students:login' %}" class="btn btn-light fw-semibold">Sign In</a>
+        <a href="{% url 'students:register' %}" class="btn btn-outline-light">Create Account</a>
+        {% endif %}
+      </div>
+    </div>
+    <div class="col-lg-4">
+      <div class="section-panel p-3 h-100">
+        <small class="text-uppercase text-body-secondary">Live Snapshot</small>
+        <div class="metric-value">{{ total_students }}</div>
+        <p class="mb-0 text-body-secondary">Student records currently available in the system.</p>
+      </div>
+    </div>
+  </div>
+</section>
+
+<div class="row g-3 mb-4">
+  <div class="col-md-4">
+    <article class="metric-card">
+      <h2 class="h6">Student Data Management</h2>
+      <p class="mb-0 text-body-secondary">Structured student records with full CRUD and secure access.</p>
+    </article>
+  </div>
+  <div class="col-md-4">
+    <article class="metric-card">
+      <h2 class="h6">Operational Workflows</h2>
+      <p class="mb-0 text-body-secondary">Admissions, attendance, fees, exam planning, and timetable flows.</p>
+    </article>
+  </div>
+  <div class="col-md-4">
+    <article class="metric-card">
+      <h2 class="h6">Admin Ready Interface</h2>
+      <p class="mb-0 text-body-secondary">Clean tables, forms, and module dashboards for daily execution.</p>
+    </article>
+  </div>
+</div>
+
+{% if user.is_authenticated %}
+<section class="card border-0 shadow-sm">
+  <div class="card-body p-4">
+    <h2 class="h5 mb-3">Student Workflow Pages</h2>
+    <div class="row g-2">
+      <div class="col-md-6 col-lg-3"><a class="btn btn-outline-primary w-100" href="{% url 'students:admission_list' %}">Student Admission</a></div>
+      <div class="col-md-6 col-lg-3"><a class="btn btn-outline-primary w-100" href="{% url 'students:attendance_list' %}">Student Attendance</a></div>
+      <div class="col-md-6 col-lg-3"><a class="btn btn-outline-primary w-100" href="{% url 'students:exam_result_list' %}">Student Exam Result</a></div>
+      <div class="col-md-6 col-lg-3"><a class="btn btn-outline-primary w-100" href="{% url 'students:exam_schedule_list' %}">Student Exam Schedule</a></div>
+      <div class="col-md-6 col-lg-3"><a class="btn btn-outline-primary w-100" href="{% url 'students:fee_invoice_list' %}">Student Fees Invoice</a></div>
+      <div class="col-md-6 col-lg-3"><a class="btn btn-outline-primary w-100" href="{% url 'students:fee_payment_list' %}">Student Fee Payment</a></div>
+      <div class="col-md-6 col-lg-3"><a class="btn btn-outline-primary w-100" href="{% url 'students:fee_structure_list' %}">Exam Fees Details</a></div>
+      <div class="col-md-6 col-lg-3"><a class="btn btn-outline-primary w-100" href="{% url 'students:fee_structure_list' %}">Student Admission Fee Structure / Detail</a></div>
+      <div class="col-md-6 col-lg-3"><a class="btn btn-primary w-100" href="{% url 'students:fee_payment_add' %}">Pay Exam Fees</a></div>
+    </div>
+  </div>
+</section>
+{% endif %}
+{% endblock %}

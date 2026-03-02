@@ -1,0 +1,80 @@
+{% extends 'Students/base.html' %}
+
+{% block title %}Admin Panel | Student Management{% endblock %}
+
+{% block content %}
+<section class="page-header">
+  <div>
+    <h1 class="page-title">Administrative Panel</h1>
+    <p class="page-subtitle">Key metrics, reporting, and recent student activity.</p>
+  </div>
+  <div class="d-flex gap-2">
+    <a href="{% url 'students:export_csv' %}" class="btn btn-outline-secondary">Export CSV</a>
+    <a href="{% url 'admin:index' %}" class="btn btn-primary">Django Admin</a>
+  </div>
+</section>
+
+<div class="row g-3 mb-4">
+  <div class="col-md-4"><article class="metric-card"><small class="text-uppercase text-body-secondary">Total Students</small><div class="metric-value">{{ total_students }}</div></article></div>
+  <div class="col-md-4"><article class="metric-card"><small class="text-uppercase text-body-secondary">Active Students</small><div class="metric-value">{{ active_students }}</div></article></div>
+  <div class="col-md-4"><article class="metric-card"><small class="text-uppercase text-body-secondary">Recent Entries</small><div class="metric-value">{{ recent_students|length }}</div></article></div>
+</div>
+
+<div class="row g-3">
+  <div class="col-lg-7">
+    <div class="card">
+      <div class="card-header"><h5 class="mb-0">Recent Students</h5></div>
+      <div class="table-responsive">
+        <table class="table table-sm align-middle mb-0">
+          <thead class="table-light">
+            <tr><th>ID</th><th>Name</th><th>Course</th><th>Enrollment</th></tr>
+          </thead>
+          <tbody>
+            {% for s in recent_students %}
+            <tr><td>{{ s.id }}</td><td>{{ s.first_name }} {{ s.last_name }}</td><td>{{ s.course }}</td><td>{{ s.enrollment_date|date:"M d, Y" }}</td></tr>
+            {% empty %}
+            <tr><td colspan="4" class="text-center py-3 text-body-secondary">No records found.</td></tr>
+            {% endfor %}
+          </tbody>
+        </table>
+      </div>
+    </div>
+  </div>
+  <div class="col-lg-5">
+    <div class="card">
+      <div class="card-header"><h5 class="mb-0">GPA Distribution</h5></div>
+      <div class="card-body"><canvas id="gpaChart" height="180"></canvas></div>
+    </div>
+  </div>
+</div>
+{% endblock %}
+
+{% block extra_js %}
+<script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
+<script>
+  (function () {
+    const labels = {{ chart_labels|default:'[]'|safe }};
+    const values = {{ chart_values|default:'[]'|safe }};
+    const chartCanvas = document.getElementById('gpaChart');
+    if (!chartCanvas || labels.length === 0) return;
+
+    new Chart(chartCanvas, {
+      type: 'bar',
+      data: {
+        labels: labels,
+        datasets: [{
+          data: values,
+          backgroundColor: 'rgba(15, 93, 207, 0.62)',
+          borderColor: 'rgba(15, 93, 207, 1)',
+          borderWidth: 1,
+          borderRadius: 6,
+        }]
+      },
+      options: {
+        plugins: { legend: { display: false } },
+        scales: { y: { beginAtZero: true, ticks: { precision: 0 } } }
+      }
+    });
+  })();
+</script>
+{% endblock %}

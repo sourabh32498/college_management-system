@@ -1,0 +1,57 @@
+{% extends 'Students/base.html' %}
+
+{% block title %}Profile | Student Management{% endblock %}
+
+{% block content %}
+<section class="dashboard-hero mb-4">
+  <h1 class="h3 mb-1">My Profile</h1>
+  <p class="mb-0 text-body-secondary">Account overview and quick platform stats.</p>
+</section>
+
+<div class="row g-3 mb-4">
+  <div class="col-md-6">
+    <article class="metric-card h-100">
+      <small class="text-uppercase">Username</small>
+      <div class="metric-value">{{ user.username }}</div>
+      <p class="mb-0 text-body-secondary">Signed in as {{ user.get_full_name|default:user.username }}.</p>
+    </article>
+  </div>
+  <div class="col-md-6">
+    <article class="metric-card h-100">
+      <small class="text-uppercase">Role</small>
+      <div class="metric-value">{% if user.is_staff %}Admin{% else %}User{% endif %}</div>
+      <p class="mb-0 text-body-secondary">
+        {% if user.is_staff %}You can manage records and workflows.{% else %}You have standard portal access.{% endif %}
+      </p>
+    </article>
+  </div>
+</div>
+
+<div class="card border-0 shadow-sm">
+  <div class="card-body">
+    <h5 class="mb-3">Account Details</h5>
+    <div class="row g-3">
+      <div class="col-md-6">
+        <label class="form-label text-body-secondary mb-1">Email</label>
+        <div class="fw-semibold">{{ user.email|default:"Not set" }}</div>
+      </div>
+      <div class="col-md-6">
+        <label class="form-label text-body-secondary mb-1">Date Joined</label>
+        <div class="fw-semibold">{{ user.date_joined|date:"M d, Y" }}</div>
+      </div>
+      <div class="col-md-6">
+        <label class="form-label text-body-secondary mb-1">Total Students</label>
+        <div class="fw-semibold">{{ total_students }}</div>
+      </div>
+      <div class="col-md-6">
+        <label class="form-label text-body-secondary mb-1">Active Students</label>
+        <div class="fw-semibold">{{ active_students }}</div>
+      </div>
+    </div>
+    <div class="mt-4 d-flex gap-2">
+      <a href="{% url 'students:dashboard' %}" class="btn btn-primary">Go to Dashboard</a>
+      <a href="{% url 'students:home' %}" class="btn btn-outline-secondary">Back Home</a>
+    </div>
+  </div>
+</div>
+{% endblock %}

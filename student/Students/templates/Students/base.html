@@ -1,0 +1,154 @@
+<!-- Students/base.html -->
+<!DOCTYPE html>
+<html lang="en" data-bs-theme="light">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>{% block title %}Student Management System{% endblock %}</title>
+    
+    <!-- Bootstrap CSS -->
+    <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.2/dist/css/bootstrap.min.css" rel="stylesheet">
+    <link href="https://cdn.jsdelivr.net/npm/bootstrap-icons@1.11.3/font/bootstrap-icons.min.css" rel="stylesheet">
+    <!-- Your custom CSS -->
+    {% load static %}
+    <link rel="stylesheet" href="{% static 'Students/css/site.css' %}">
+    {% block extra_css %}{% endblock %}
+</head>
+<body>
+    <!-- Floating animated orbs - Add these right after body tag -->
+    <div class="floating-orb orb-1"></div>
+    <div class="floating-orb orb-2"></div>
+    <div class="floating-orb orb-3"></div>
+
+    <!-- Navigation -->
+    <nav class="app-nav navbar navbar-expand-lg mb-4">
+        <div class="container">
+            <a class="navbar-brand d-flex align-items-center gap-2 text-white" href="{% url 'students:home' %}">
+                <span class="brand-mark">SM</span>
+                <span class="fw-semibold">Student Manager</span>
+            </a>
+            
+            <button class="navbar-toggler" type="button" data-bs-toggle="collapse" data-bs-target="#navbarMain">
+                <span class="navbar-toggler-icon"></span>
+            </button>
+            
+            <div class="collapse navbar-collapse" id="navbarMain">
+                <ul class="navbar-nav ms-auto mb-2 mb-lg-0">
+                    <li class="nav-item">
+                        <a class="nav-link" href="{% url 'students:college_home' %}">College Website</a>
+                    </li>
+                    <li class="nav-item">
+                        <a class="nav-link" href="{% url 'students:home' %}">Home</a>
+                    </li>
+                    
+                    {% if user.is_authenticated %}
+                        <li class="nav-item">
+                            <a class="nav-link" href="{% url 'students:dashboard' %}">Dashboard</a>
+                        </li>
+                        <li class="nav-item">
+                            <a class="nav-link" href="{% url 'students:workflow_hub' %}">Workflows</a>
+                        </li>
+                        <li class="nav-item">
+                            <a class="nav-link" href="{% url 'students:list' %}">Students</a>
+                        </li>
+                        <li class="nav-item">
+                            <a class="nav-link text-danger" href="{% url 'students:logout' %}">Logout</a>
+                        </li>
+                        
+                        <!-- User menu -->
+                        <li class="nav-item dropdown">
+                            <a class="nav-link dropdown-toggle" href="#" role="button" data-bs-toggle="dropdown">
+                                <span class="user-pill">
+                                    <i class="bi bi-person-circle me-1"></i>
+                                    {{ user.username }}
+                                </span>
+                            </a>
+                            <ul class="dropdown-menu dropdown-menu-end">
+                                <li><a class="dropdown-item" href="{% url 'students:profile' %}">Profile</a></li>
+                                <li><hr class="dropdown-divider"></li>
+                                <li><a class="dropdown-item" href="{% url 'students:logout' %}">Logout</a></li>
+                            </ul>
+                        </li>
+                    {% else %}
+                        <li class="nav-item">
+                            <a class="nav-link" href="{% url 'students:login' %}">Login</a>
+                        </li>
+                        <li class="nav-item">
+                            <a class="nav-link" href="{% url 'students:register' %}">Register</a>
+                        </li>
+                    {% endif %}
+                </ul>
+            </div>
+        </div>
+    </nav>
+
+    <!-- Main Content -->
+    <main class="container mb-5">
+        <!-- Messages/Alerts -->
+        {% if messages %}
+            {% for message in messages %}
+                <div class="alert alert-{{ message.tags }} alert-dismissible fade show" role="alert">
+                    {{ message }}
+                    <button type="button" class="btn-close" data-bs-dismiss="alert"></button>
+                </div>
+            {% endfor %}
+        {% endif %}
+
+        <!-- Page Content -->
+        {% block content %}
+        {% endblock %}
+    </main>
+
+    <!-- Footer -->
+    <footer class="app-footer py-4 mt-auto">
+        <div class="container">
+            <div class="row">
+                <div class="col-md-6">
+                    <p class="mb-0"> {% now "Y" %} Student Management System. All rights reserved.</p>
+                </div>
+                <div class="col-md-6 text-md-end">
+                    <small class="text-body-secondary">Version 1.0</small>
+                </div>
+            </div>
+        </div>
+    </footer>
+
+    <!-- Bootstrap JS -->
+    <script src="https://cdn.jsdelivr.net/npm/bootstrap@5.3.2/dist/js/bootstrap.bundle.min.js"></script>
+    
+    <!-- Dark mode toggle (optional) -->
+    <script>
+        // You can add dark mode toggle functionality here
+        // This is optional - you can remove if not needed
+        function toggleTheme() {
+            const html = document.documentElement;
+            const currentTheme = html.getAttribute('data-bs-theme');
+            const newTheme = currentTheme === 'light' ? 'dark' : 'light';
+            html.setAttribute('data-bs-theme', newTheme);
+        }
+
+        document.addEventListener('click', function (event) {
+            const toggle = event.target.closest('[data-password-toggle]');
+            if (!toggle) return;
+
+            const targetId = toggle.getAttribute('data-target');
+            const input = document.getElementById(targetId);
+            if (!input) return;
+
+            const isPassword = input.type === 'password';
+            input.type = isPassword ? 'text' : 'password';
+            toggle.setAttribute('aria-label', isPassword ? 'Hide password' : 'Show password');
+
+            const icon = toggle.querySelector('i.bi');
+            if (icon) {
+                icon.classList.toggle('bi-eye', !isPassword);
+                icon.classList.toggle('bi-eye-slash', isPassword);
+            } else {
+                toggle.textContent = isPassword ? 'Hide' : 'Show';
+            }
+        });
+    </script>
+    
+    {% block extra_js %}{% endblock %}
+</body>
+</html>

@@ -1,0 +1,26 @@
+{% extends 'Students/base.html' %}
+
+{% block title %}Departments | {{ college_name }}{% endblock %}
+
+{% block content %}
+<section class="page-header">
+  <div>
+    <h1 class="page-title">Academic Departments</h1>
+    <p class="page-subtitle">Strong departments supporting academics, research, and innovation.</p>
+  </div>
+</section>
+
+<div class="row g-3">
+  {% for dept in departments %}
+  <div class="col-md-6 col-lg-4">
+    <article class="module-card h-100">
+      <header class="d-flex justify-content-between align-items-center mb-2">
+        <h2 class="h6 mb-0">{{ dept }}</h2>
+        <span class="module-icon">DP</span>
+      </header>
+      <p class="mb-0 text-body-secondary">Curriculum, mentoring, practical learning, and career readiness in {{ dept }}.</p>
+    </article>
+  </div>
+  {% endfor %}
+</div>
+{% endblock %}

@@ -1,0 +1,41 @@
+{% extends 'Students/base.html' %}
+
+{% block title %}About | Student Management{% endblock %}
+
+{% block content %}
+<section class="page-header">
+  <div>
+    <h1 class="page-title">About This System</h1>
+    <p class="page-subtitle">Professional student lifecycle and academic operations platform.</p>
+  </div>
+</section>
+
+<div class="row g-3">
+  <div class="col-lg-8">
+    <div class="card mb-3">
+      <div class="card-body">
+        <p class="mb-0">This Student Management System is built with Django and Bootstrap to manage profiles, admissions, attendance, exams, fees, and timetable operations through a centralized interface.</p>
+      </div>
+    </div>
+    <div class="card">
+      <div class="card-body">
+        <h5 class="mb-3">Core Capabilities</h5>
+        <ul class="mb-0">
+          <li>Student records and profile management</li>
+          <li>Role-aware dashboard and workflow modules</li>
+          <li>Fee and exam operations</li>
+          <li>CSV export and admin oversight</li>
+          <li>Secure authentication and password reset</li>
+        </ul>
+      </div>
+    </div>
+  </div>
+  <div class="col-lg-4">
+    <div class="metric-card">
+      <small class="text-uppercase text-body-secondary">Current Records</small>
+      <div class="metric-value">{{ total_students }}</div>
+      <p class="mb-0 text-body-secondary">Total student entries currently stored.</p>
+    </div>
+  </div>
+</div>
+{% endblock %}

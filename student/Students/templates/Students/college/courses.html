@@ -1,0 +1,36 @@
+{% extends 'Students/base.html' %}
+
+{% block title %}Courses | {{ college_name }}{% endblock %}
+
+{% block content %}
+<section class="page-header">
+  <div>
+    <h1 class="page-title">Courses and Programs</h1>
+    <p class="page-subtitle">Undergraduate and postgraduate programs designed for careers and research.</p>
+  </div>
+  <a href="{% url 'students:college_admissions' %}" class="btn btn-primary">Admission Process</a>
+</section>
+
+<div class="card">
+  <div class="table-responsive">
+    <table class="table table-hover align-middle mb-0">
+      <thead class="table-light">
+        <tr>
+          <th>Program</th>
+          <th>Level</th>
+          <th>Duration</th>
+        </tr>
+      </thead>
+      <tbody>
+        {% for p in programs %}
+        <tr>
+          <td>{{ p.name }}</td>
+          <td>{{ p.level }}</td>
+          <td>{{ p.duration }}</td>
+        </tr>
+        {% endfor %}
+      </tbody>
+    </table>
+  </div>
+</div>
+{% endblock %}

@@ -1,0 +1,64 @@
+{% extends 'Students/base.html' %}
+
+{% block title %}Admissions | {{ college_name }}{% endblock %}
+
+{% block content %}
+<section class="page-header">
+  <div>
+    <h1 class="page-title">Admissions</h1>
+    <p class="page-subtitle">Join {{ college_name }} through a transparent and merit-based process.</p>
+  </div>
+  <a href="{% url 'students:admission_list' %}" class="btn btn-primary">Open Admission Portal</a>
+</section>
+
+<div class="row g-3 mb-4">
+  <div class="col-md-6 col-lg-3">
+    <article class="metric-card">
+      <small class="text-uppercase">Step 1</small>
+      <div class="h6 mb-1 mt-2">Choose Program</div>
+      <p class="mb-0 text-body-secondary">Select UG/PG program based on eligibility.</p>
+    </article>
+  </div>
+  <div class="col-md-6 col-lg-3">
+    <article class="metric-card">
+      <small class="text-uppercase">Step 2</small>
+      <div class="h6 mb-1 mt-2">Submit Form</div>
+      <p class="mb-0 text-body-secondary">Fill admission form and upload required details.</p>
+    </article>
+  </div>
+  <div class="col-md-6 col-lg-3">
+    <article class="metric-card">
+      <small class="text-uppercase">Step 3</small>
+      <div class="h6 mb-1 mt-2">Verification</div>
+      <p class="mb-0 text-body-secondary">Academic and profile verification by admission cell.</p>
+    </article>
+  </div>
+  <div class="col-md-6 col-lg-3">
+    <article class="metric-card">
+      <small class="text-uppercase">Step 4</small>
+      <div class="h6 mb-1 mt-2">Fee Payment</div>
+      <p class="mb-0 text-body-secondary">Pay admission and semester fees to confirm seat.</p>
+    </article>
+  </div>
+</div>
+
+<div class="card">
+  <div class="card-header bg-white"><h2 class="h6 mb-0">Eligibility Snapshot</h2></div>
+  <div class="table-responsive">
+    <table class="table align-middle mb-0">
+      <thead class="table-light">
+        <tr>
+          <th>Program</th>
+          <th>Eligibility</th>
+        </tr>
+      </thead>
+      <tbody>
+        <tr><td>BCA / BBA / B.Com</td><td>10+2 with minimum qualifying marks as per norms.</td></tr>
+        <tr><td>MBA</td><td>Graduation in any discipline + entrance/interview process.</td></tr>
+        <tr><td>MCA</td><td>Graduation with Mathematics at 10+2 or degree level.</td></tr>
+        <tr><td>B.Tech CSE</td><td>10+2 with PCM and entrance criteria as applicable.</td></tr>
+      </tbody>
+    </table>
+  </div>
+</div>
+{% endblock %}

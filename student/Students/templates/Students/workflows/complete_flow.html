@@ -1,0 +1,83 @@
+{% extends 'Students/base.html' %}
+
+{% block title %}Complete Flow | Student Management{% endblock %}
+
+{% block content %}
+<section class="page-header">
+  <div>
+    <h1 class="page-title">Complete Workflow Flow</h1>
+    <p class="page-subtitle">Run the full student process in the correct operational order.</p>
+  </div>
+  <a href="{% url 'students:workflow_hub' %}" class="btn btn-outline-secondary">Back to Workflow Hub</a>
+</section>
+
+<div class="card mb-4">
+  <div class="card-body">
+    <div class="row g-3">
+      <div class="col-md-6">
+        <div class="border rounded p-3 h-100">
+          <div class="fw-semibold mb-1">1. Student Admission</div>
+          <p class="text-body-secondary mb-2">Create and review admission applications.</p>
+          <a href="{% url 'students:admission_list' %}" class="btn btn-sm btn-primary">Open Student Admission</a>
+        </div>
+      </div>
+      <div class="col-md-6">
+        <div class="border rounded p-3 h-100">
+          <div class="fw-semibold mb-1">2. Student Attendance</div>
+          <p class="text-body-secondary mb-2">Record and monitor daily attendance.</p>
+          <a href="{% url 'students:attendance_list' %}" class="btn btn-sm btn-primary">Open Student Attendance</a>
+        </div>
+      </div>
+      <div class="col-md-6">
+        <div class="border rounded p-3 h-100">
+          <div class="fw-semibold mb-1">3. Student Exam Schedule</div>
+          <p class="text-body-secondary mb-2">Create exam schedules for courses and subjects.</p>
+          <a href="{% url 'students:exam_schedule_list' %}" class="btn btn-sm btn-primary">Open Student Exam Schedule</a>
+        </div>
+      </div>
+      <div class="col-md-6">
+        <div class="border rounded p-3 h-100">
+          <div class="fw-semibold mb-1">4. Student Exam Result</div>
+          <p class="text-body-secondary mb-2">Enter and verify exam marks and grades.</p>
+          <a href="{% url 'students:exam_result_list' %}" class="btn btn-sm btn-primary">Open Student Exam Result</a>
+        </div>
+      </div>
+      <div class="col-md-6">
+        <div class="border rounded p-3 h-100">
+          <div class="fw-semibold mb-1">5. Student Fees Invoice</div>
+          <p class="text-body-secondary mb-2">Generate invoices and track dues.</p>
+          <a href="{% url 'students:fee_invoice_list' %}" class="btn btn-sm btn-primary">Open Student Fees Invoice</a>
+        </div>
+      </div>
+      <div class="col-md-6">
+        <div class="border rounded p-3 h-100">
+          <div class="fw-semibold mb-1">6. Student Fee Payment</div>
+          <p class="text-body-secondary mb-2">Review payment records and transaction entries.</p>
+          <a href="{% url 'students:fee_payment_list' %}" class="btn btn-sm btn-primary">Open Student Fee Payment</a>
+        </div>
+      </div>
+      <div class="col-md-6">
+        <div class="border rounded p-3 h-100">
+          <div class="fw-semibold mb-1">7. Exam Fees Details</div>
+          <p class="text-body-secondary mb-2">Configure fee structures for exams and academic sessions.</p>
+          <a href="{% url 'students:fee_structure_list' %}" class="btn btn-sm btn-primary">Open Exam Fees Details</a>
+        </div>
+      </div>
+      <div class="col-md-6">
+        <div class="border rounded p-3 h-100">
+          <div class="fw-semibold mb-1">8. Student Admission Fee Structure / Detail</div>
+          <p class="text-body-secondary mb-2">View admission fee structure and semester-wise fee details by course.</p>
+          <a href="{% url 'students:fee_structure_list' %}" class="btn btn-sm btn-primary">Open Student Admission Fee Structure</a>
+        </div>
+      </div>
+      <div class="col-md-6">
+        <div class="border rounded p-3 h-100">
+          <div class="fw-semibold mb-1">9. Pay Exam Fees</div>
+          <p class="text-body-secondary mb-2">Post a new payment against an invoice.</p>
+          <a href="{% url 'students:fee_payment_add' %}" class="btn btn-sm btn-success">Open Pay Exam Fees</a>
+        </div>
+      </div>
+    </div>
+  </div>
+</div>
+{% endblock %}

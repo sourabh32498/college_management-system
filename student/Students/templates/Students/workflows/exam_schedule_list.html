@@ -1,0 +1,11 @@
+{% extends 'Students/base.html' %}
+
+{% block title %}Exam Schedules | Student Management{% endblock %}
+
+{% block content %}
+<section class="page-header">
+  <div><h1 class="page-title">Exam Schedules</h1><p class="page-subtitle">Manage exam plans, rooms, and timing.</p></div>
+  <a href="{% url 'students:exam_schedule_add' %}" class="btn btn-primary">Schedule Exam</a>
+</section>
+<div class="card"><div class="table-responsive"><table class="table align-middle mb-0"><thead class="table-light"><tr><th>Title</th><th>Course</th><th>Subject</th><th>Date</th><th>Time</th><th>Room</th></tr></thead><tbody>{% for exam in exams %}<tr><td>{{ exam.title }}</td><td>{{ exam.course }}</td><td>{{ exam.subject }}</td><td>{{ exam.exam_date }}</td><td>{{ exam.start_time }} - {{ exam.end_time }}</td><td>{{ exam.room|default:"-" }}</td></tr>{% empty %}<tr><td colspan="6" class="text-center py-4 text-body-secondary">No exam schedules found.</td></tr>{% endfor %}</tbody></table></div></div>
+{% endblock %}

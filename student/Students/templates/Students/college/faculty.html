@@ -1,0 +1,36 @@
+{% extends 'Students/base.html' %}
+
+{% block title %}Faculty | {{ college_name }}{% endblock %}
+
+{% block content %}
+<section class="page-header">
+  <div>
+    <h1 class="page-title">Faculty and Mentors</h1>
+    <p class="page-subtitle">Experienced faculty focused on quality teaching and student growth.</p>
+  </div>
+</section>
+
+<div class="row g-3 mb-4">
+  {% for member in faculty_members %}
+  <div class="col-md-6">
+    <div class="card h-100">
+      <div class="card-body">
+        <h2 class="h6 mb-1">{{ member.name }}</h2>
+        <p class="mb-0 text-body-secondary">{{ member.designation }}</p>
+      </div>
+    </div>
+  </div>
+  {% endfor %}
+</div>
+
+<div class="card">
+  <div class="card-header bg-white"><h2 class="h6 mb-0">Campus Facilities</h2></div>
+  <div class="card-body">
+    <ul class="mb-0">
+      {% for facility in facilities %}
+      <li class="mb-2">{{ facility }}</li>
+      {% endfor %}
+    </ul>
+  </div>
+</div>
+{% endblock %}
