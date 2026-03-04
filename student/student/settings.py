@@ -82,7 +82,12 @@ WSGI_APPLICATION = 'student.wsgi.application'
 # https://docs.djangoproject.com/en/5.2/ref/settings/#databases
 
 DATABASE_URL = os.getenv('DATABASE_URL', '').strip()
-if DATABASE_URL and dj_database_url:
+if DATABASE_URL:
+    if not dj_database_url:
+        raise RuntimeError(
+            "DATABASE_URL is set but dj-database-url is not installed. "
+            "Install it with: pip install dj-database-url"
+        )
     DATABASES = {
         'default': dj_database_url.parse(
             DATABASE_URL,
@@ -91,17 +96,11 @@ if DATABASE_URL and dj_database_url:
         )
     }
 else:
+    # Safe local fallback (no MySQL dependency required).
     DATABASES = {
         'default': {
-            'ENGINE': 'django.db.backends.mysql',
-            'NAME': os.getenv('DB_NAME', 'student_management'),
-            'USER': os.getenv('DB_USER', 'root'),
-            'PASSWORD': os.getenv('DB_PASSWORD', ''),
-            'HOST': os.getenv('DB_HOST', '127.0.0.1'),
-            'PORT': os.getenv('DB_PORT', '3306'),
-            'OPTIONS': {
-                'charset': 'utf8mb4',
-            },
+            'ENGINE': 'django.db.backends.sqlite3',
+            'NAME': BASE_DIR / 'db.sqlite3',
         }
     }
 
