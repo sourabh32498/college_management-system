@@ -12,6 +12,7 @@ from .models import (
     FeePayment,
     Room,
     TimetableEntry,
+    ExamFormSubmission,
 )
 
 from django.contrib.auth.forms import AuthenticationForm, UserCreationForm, PasswordResetForm, SetPasswordForm
@@ -90,8 +91,9 @@ class CustomSetPasswordForm(SetPasswordForm):
 class StudentForm(forms.ModelForm):
     class Meta:
         model = Student
-        fields = ['seat_number', 'mother_name', 'father_name', 'parent_name', 'first_name', 'last_name', 'email', 'enrollment_date', 'course', 'gpa', 'is_active']
+        fields = ['seat_number', 'date_of_birth', 'mother_name', 'father_name', 'parent_name', 'first_name', 'last_name', 'email', 'enrollment_date', 'course', 'gpa', 'is_active']
         widgets = {
+            'date_of_birth': forms.DateInput(attrs={'type': 'date'}),
             'enrollment_date': forms.DateInput(attrs={'type': 'date'}),
         }
 
@@ -109,6 +111,12 @@ class StudentForm(forms.ModelForm):
         if enrollment_date and enrollment_date > timezone.localdate():
             raise forms.ValidationError('Enrollment date cannot be in the future.')
         return enrollment_date
+
+    def clean_date_of_birth(self):
+        date_of_birth = self.cleaned_data.get('date_of_birth')
+        if date_of_birth and date_of_birth > timezone.localdate():
+            raise forms.ValidationError('Date of birth cannot be in the future.')
+        return date_of_birth
 
     def clean_email(self):
         email = self.cleaned_data.get('email')
@@ -148,28 +156,113 @@ class StudentForm(forms.ModelForm):
                     field.widget.attrs['placeholder'] = "Student's father name"
 
 
-class OnlineResultSearchForm(forms.Form):
-    seat_number = forms.CharField(max_length=30, label='Seat Number')
-    mother_name = forms.CharField(max_length=120, label="Mother's Name")
-    father_name = forms.CharField(max_length=120, label="Father's Name")
+class ExamFormSubmissionForm(forms.Form):
+    seat_number = forms.CharField(max_length=30, label='Seat Number', required=False)
+    first_name = forms.CharField(max_length=50, label='First Name')
+    last_name = forms.CharField(max_length=50, label='Last Name')
+    email = forms.EmailField(label='Email')
+    course = forms.CharField(max_length=100, label='Course Name')
+    mother_name = forms.CharField(max_length=120, label='Mother Name', required=False)
+    father_name = forms.CharField(max_length=120, label='Father Name', required=False)
+    parent_name = forms.CharField(max_length=120, label='Parent/Guardian Name', required=False)
+    address = forms.CharField(max_length=255, label='Address', required=False)
+    mobile_number = forms.CharField(max_length=20, label='Mobile Number', required=False)
+    gender = forms.ChoiceField(
+        choices=[('Male', 'Male'), ('Female', 'Female'), ('Other', 'Other')],
+        label='Gender',
+        required=False,
+    )
+    category = forms.ChoiceField(
+        choices=[('Open', 'Open'), ('OBC', 'OBC'), ('SC', 'SC'), ('ST', 'ST'), ('NT', 'NT'), ('EWS', 'EWS')],
+        label='Category',
+        required=False,
+    )
+    medium = forms.ChoiceField(
+        choices=[('English', 'English'), ('Hindi', 'Hindi'), ('Marathi', 'Marathi')],
+        label='Medium of Instruction',
+        required=False,
+    )
+    date_of_birth = forms.DateField(
+        required=False,
+        label='Date of Birth (Optional)',
+        widget=forms.DateInput(attrs={'type': 'date'}),
+    )
+    semester = forms.ChoiceField(
+        choices=[
+            ('SEM-1', 'Semester 1'),
+            ('SEM-2', 'Semester 2'),
+            ('SEM-3', 'Semester 3'),
+            ('SEM-4', 'Semester 4'),
+            ('SEM-5', 'Semester 5'),
+            ('SEM-6', 'Semester 6'),
+            ('SEM-7', 'Semester 7'),
+            ('SEM-8', 'Semester 8'),
+        ],
+        label='Semester',
+    )
+    exam_session = forms.CharField(max_length=20, label='Exam Session')
+    declaration = forms.BooleanField(label='I confirm the details are correct.', required=True)
 
     def __init__(self, *args, **kwargs):
         super().__init__(*args, **kwargs)
         _set_field_class(self, 'seat_number', 'form-control')
+        _set_field_class(self, 'first_name', 'form-control')
+        _set_field_class(self, 'last_name', 'form-control')
+        _set_field_class(self, 'email', 'form-control')
+        _set_field_class(self, 'course', 'form-control')
         _set_field_class(self, 'mother_name', 'form-control')
         _set_field_class(self, 'father_name', 'form-control')
-        self.fields['seat_number'].widget.attrs.update({'placeholder': 'Enter seat number'})
-        self.fields['mother_name'].widget.attrs.update({'placeholder': "Enter mother's name"})
-        self.fields['father_name'].widget.attrs.update({'placeholder': "Enter father's name"})
+        _set_field_class(self, 'parent_name', 'form-control')
+        _set_field_class(self, 'address', 'form-control')
+        _set_field_class(self, 'mobile_number', 'form-control')
+        _set_field_class(self, 'gender', 'form-select')
+        _set_field_class(self, 'category', 'form-select')
+        _set_field_class(self, 'medium', 'form-select')
+        _set_field_class(self, 'date_of_birth', 'form-control')
+        _set_field_class(self, 'semester', 'form-select')
+        _set_field_class(self, 'exam_session', 'form-control')
+        self.fields['seat_number'].widget.attrs.update({'placeholder': 'Leave blank for auto-generated seat number'})
+        self.fields['first_name'].widget.attrs.update({'placeholder': 'Enter first name'})
+        self.fields['last_name'].widget.attrs.update({'placeholder': 'Enter last name'})
+        self.fields['course'].widget.attrs.update({'placeholder': 'e.g. MCA'})
+        self.fields['address'].widget.attrs.update({'placeholder': 'Enter full address'})
+        self.fields['mobile_number'].widget.attrs.update({'placeholder': 'Enter mobile number'})
+        self.fields['exam_session'].widget.attrs.update({'placeholder': 'e.g. 2026-27'})
 
     def clean_seat_number(self):
         return self.cleaned_data['seat_number'].strip().upper()
 
-    def clean_mother_name(self):
-        return self.cleaned_data['mother_name'].strip()
+    def clean_exam_session(self):
+        return self.cleaned_data['exam_session'].strip()
 
-    def clean_father_name(self):
-        return self.cleaned_data['father_name'].strip()
+
+class OnlineResultSearchForm(forms.Form):
+    seat_number = forms.CharField(max_length=30, label='Seat Number')
+
+    def __init__(self, *args, **kwargs):
+        super().__init__(*args, **kwargs)
+        _set_field_class(self, 'seat_number', 'form-control')
+        self.fields['seat_number'].widget.attrs.update({'placeholder': 'Enter seat number from hall ticket'})
+
+    def clean_seat_number(self):
+        return self.cleaned_data['seat_number'].strip().upper()
+
+class HallTicketSearchForm(forms.Form):
+    seat_number = forms.CharField(max_length=30, label='Seat Number')
+    date_of_birth = forms.DateField(
+        required=False,
+        label='Date of Birth (Optional)',
+        widget=forms.DateInput(attrs={'type': 'date'}),
+    )
+
+    def __init__(self, *args, **kwargs):
+        super().__init__(*args, **kwargs)
+        _set_field_class(self, 'seat_number', 'form-control')
+        _set_field_class(self, 'date_of_birth', 'form-control')
+        self.fields['seat_number'].widget.attrs.update({'placeholder': 'Enter seat number'})
+
+    def clean_seat_number(self):
+        return self.cleaned_data['seat_number'].strip().upper()
 
 
 class BootstrapModelForm(forms.ModelForm):

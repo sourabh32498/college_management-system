@@ -77,6 +77,27 @@
           <a href="{% url 'students:fee_payment_add' %}" class="btn btn-sm btn-success">Open Pay Exam Fees</a>
         </div>
       </div>
+      <div class="col-md-6">
+        <div class="border rounded p-3 h-100">
+          <div class="fw-semibold mb-1">10. Exam Form</div>
+          <p class="text-body-secondary mb-2">Open student exam form flow (Login -> Dashboard -> Portal -> Form).</p>
+          <a href="{% url 'students:college_exam_form' %}" class="btn btn-sm btn-primary">Open Exam Form</a>
+        </div>
+      </div>
+      <div class="col-md-6">
+        <div class="border rounded p-3 h-100">
+          <div class="fw-semibold mb-1">11. Hall Ticket</div>
+          <p class="text-body-secondary mb-2">Generate/print hall ticket using seat number and verification details.</p>
+          <a href="{% url 'students:college_hall_ticket' %}" class="btn btn-sm btn-primary">Open Hall Ticket</a>
+        </div>
+      </div>
+      <div class="col-md-6">
+        <div class="border rounded p-3 h-100">
+          <div class="fw-semibold mb-1">12. Online Result</div>
+          <p class="text-body-secondary mb-2">Students can view declared results using seat number.</p>
+          <a href="{% url 'students:college_results' %}" class="btn btn-sm btn-primary">Open Online Result</a>
+        </div>
+      </div>
     </div>
   </div>
 </div>

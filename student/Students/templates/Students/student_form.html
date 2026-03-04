@@ -28,6 +28,11 @@
               {% if form.seat_number.errors %}<div class="invalid-feedback d-block">{{ form.seat_number.errors|join:', ' }}</div>{% endif %}
             </div>
             <div class="col-md-6">
+              <label class="form-label" for="{{ form.date_of_birth.id_for_label }}">Date of Birth</label>
+              {{ form.date_of_birth }}
+              {% if form.date_of_birth.errors %}<div class="invalid-feedback d-block">{{ form.date_of_birth.errors|join:', ' }}</div>{% endif %}
+            </div>
+            <div class="col-md-6">
               <label class="form-label" for="{{ form.parent_name.id_for_label }}">Mother/Father Name</label>
               {{ form.parent_name }}
               {% if form.parent_name.errors %}<div class="invalid-feedback d-block">{{ form.parent_name.errors|join:', ' }}</div>{% endif %}

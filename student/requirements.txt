@@ -1,2 +1,4 @@
 Django==5.2.8
 mysqlclient==2.2.8
+gunicorn==22.0.0
+whitenoise==6.4.0

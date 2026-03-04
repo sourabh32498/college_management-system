@@ -8,15 +8,21 @@ from . import views
 app_name = 'students'
 
 urlpatterns = [
-    path('college/', views.CollegeWebsiteHomeView.as_view(), name='college_home'),
+    path('college/', views.CollegeWebsiteHomeView.as_view()),
     path('college/courses/', views.CollegeCoursesView.as_view(), name='college_courses'),
     path('college/admissions/', views.CollegeAdmissionsView.as_view(), name='college_admissions'),
+    path('college/exam-form/', views.CollegeExamStudentLoginView.as_view(), name='college_exam_form'),
+    path('college/exam-form/student-dashboard/', views.CollegeExamStudentDashboardView.as_view(), name='college_exam_student_dashboard'),
+    path('college/exam-form/portal/', views.CollegeExamPortalView.as_view(), name='college_exam_portal'),
+    path('college/exam-form/dashboard/', views.CollegeExamDashboardView.as_view(), name='college_exam_dashboard'),
+    path('college/exam-form/fill/', views.CollegeExamFormView.as_view(), name='college_exam_form_fill'),
+    path('college/hall-ticket/', views.CollegeHallTicketView.as_view(), name='college_hall_ticket'),
     path('college/results/', views.CollegeOnlineResultView.as_view(), name='college_results'),
     path('college/departments/', views.CollegeDepartmentsView.as_view(), name='college_departments'),
     path('college/faculty/', views.CollegeFacultyView.as_view(), name='college_faculty'),
     path('college/contact/', views.CollegeContactView.as_view(), name='college_contact'),
     path('', views.CollegeWebsiteHomeView.as_view(), name='home'),
-    path('home/', views.HomePageView.as_view(), name='home_alt'),
+    path('home/', views.CollegeWebsiteHomeView.as_view()),
     path('about/', views.AboutPageView.as_view(), name='about'),
     path('profile/', views.ProfileView.as_view(), name='profile'),
     path('dashboard/', views.DashboardView.as_view(), name='dashboard'),

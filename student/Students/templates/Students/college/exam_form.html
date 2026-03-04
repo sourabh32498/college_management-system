@@ -1,0 +1,357 @@
+{% extends 'Students/base.html' %}
+
+{% block title %}Exam Form | {{ college_name }}{% endblock %}
+
+{% block extra_css %}
+<style>
+  .exam-sheet {
+    background: #fff;
+    border: 1px solid #b9b9b9;
+    color: #111;
+    font-family: "Segoe UI", Tahoma, sans-serif;
+    font-size: 12px;
+    line-height: 1.25;
+  }
+  .exam-sheet .sheet-header {
+    text-align: center;
+    border-bottom: 1px solid #b9b9b9;
+    padding: 10px 12px 8px;
+  }
+  .exam-sheet .sheet-title {
+    font-weight: 700;
+    font-size: 15px;
+  }
+  .exam-sheet .sheet-subtitle {
+    font-size: 11px;
+  }
+  .sheet-table {
+    width: 100%;
+    border-collapse: collapse;
+  }
+  .sheet-table th,
+  .sheet-table td {
+    border: 1px solid #b9b9b9;
+    padding: 4px 6px;
+    vertical-align: middle;
+  }
+  .sheet-table th {
+    background: #f2f2f2;
+    font-weight: 600;
+  }
+  .sheet-section {
+    font-weight: 700;
+    background: #f7f7f7;
+  }
+  .print-divider {
+    border-top: 1px dashed #9a9a9a;
+    margin: 20px 0;
+  }
+  .field-cell .form-control,
+  .field-cell .form-select {
+    border: none;
+    border-radius: 0;
+    min-height: 24px;
+    padding: 2px 4px;
+    font-size: 12px;
+    box-shadow: none;
+  }
+  .field-cell .form-control:focus,
+  .field-cell .form-select:focus {
+    border: none;
+    box-shadow: inset 0 0 0 1px #2a5fa0;
+  }
+  .tiny-note {
+    font-size: 10px;
+  }
+  @media print {
+    .app-nav, .app-footer, .btn, .alert, .page-header, .flow-actions {
+      display: none !important;
+    }
+    main.container {
+      max-width: 100% !important;
+      margin: 0 !important;
+      padding: 0 !important;
+    }
+    .exam-sheet {
+      border: none;
+    }
+    .print-divider {
+      page-break-before: always;
+      border: none;
+      margin: 0;
+    }
+  }
+</style>
+{% endblock %}
+
+{% block content %}
+<section class="page-header">
+  <div>
+    <h1 class="page-title">University Exam Form</h1>
+    <p class="page-subtitle">SPPU-style exam form layout. Fill details and submit to generate hall ticket.</p>
+  </div>
+  <div class="d-flex gap-2">
+    <a href="{% url 'students:college_exam_dashboard' %}" class="btn btn-outline-primary">Back to Dashboard</a>
+    <button type="button" class="btn btn-outline-secondary" onclick="window.print()">Print Preview</button>
+  </div>
+</section>
+
+{% if lookup_error %}
+<div class="alert alert-warning">{{ lookup_error }}</div>
+{% endif %}
+
+<form method="post">
+  {% csrf_token %}
+
+  <div class="exam-sheet mb-4">
+    <div class="sheet-header">
+      <div class="sheet-title">Savitribai Phule Pune University</div>
+      <div class="sheet-subtitle">Examination Form (Mar/Apr 2025)</div>
+    </div>
+
+    <table class="sheet-table">
+      <tr>
+        <td width="18%"><strong>Course Name</strong></td>
+        <td width="32%">{{ student_preview.course|default:"MCA (New Pattern 2024)" }}</td>
+        <td width="18%"><strong>Form No</strong></td>
+        <td width="32%">1637-002680</td>
+      </tr>
+      <tr>
+        <td><strong>Mobile number</strong></td>
+        <td>{{ student_preview.mobile_number|default:"Auto after submit" }}</td>
+        <td><strong>Email </strong></td>
+        <td>{{ student_preview.email|default:"Auto after submit" }}</td>
+      </tr>
+      <tr>
+        <td><strong>PUN Code</strong></td>
+        <td>MMCA16370</td>
+        <td><strong>College</strong></td>
+        <td>457 | Institute of Management Studies</td>
+      </tr>
+    </table>
+
+    <div class="p-2 tiny-note">
+      <strong>Instructions to the candidate:</strong>
+      <ol class="mb-1">
+        <li>Exam form along with marksheet copy should be submitted to the concerned college.</li>
+        <li>Re-appear students should attach internet copy of latest marksheet.</li>
+        <li>Form is accepted only after approval by college login.</li>
+      </ol>
+    </div>
+
+    <table class="sheet-table">
+      <tr>
+        <th colspan="4" class="sheet-section">1. Personal Details</th>
+      </tr>
+      <tr>
+        <td width="18%"><strong>First Name</strong></td>
+        <td width="32%" class="field-cell">{{ form.first_name }}</td>
+        <td width="18%"><strong>Mother Name</strong></td>
+        <td width="32%" class="field-cell">{{ form.mother_name }}</td>
+      </tr>
+      <tr>
+        <td><strong>Last Name</strong></td>
+        <td class="field-cell">{{ form.last_name }}</td>
+        <td><strong>Father Name</strong></td>
+        <td class="field-cell">{{ form.father_name }}</td>
+      </tr>
+      <tr>
+        <td><strong>Address</strong></td>
+        <td class="field-cell">{{ form.address }}</td>
+        <td><strong>Parent/Guardian</strong></td>
+        <td class="field-cell">{{ form.parent_name }}</td>
+      </tr>
+      <tr>
+        <td><strong>Email</strong></td>
+        <td class="field-cell">{{ form.email }}</td>
+        <td><strong>Mobile Number</strong></td>
+        <td class="field-cell">{{ form.mobile_number }}</td>
+      </tr>
+      <tr>
+        <td><strong>Course Name</strong></td>
+        <td class="field-cell">{{ form.course }}</td>
+        <td><strong>Gender</strong></td>
+        <td class="field-cell">{{ form.gender }}</td>
+      </tr>
+      <tr>
+        <td><strong>DOB</strong></td>
+        <td class="field-cell">{{ form.date_of_birth }}</td>
+        <td><strong>Category</strong></td>
+        <td class="field-cell">{{ form.category }}</td>
+      </tr>
+      <tr>
+        <td><strong>Seat Number</strong></td>
+        <td class="field-cell">{{ form.seat_number }}</td>
+        <td><strong>Exam Session</strong></td>
+        <td class="field-cell">{{ form.exam_session }}</td>
+      </tr>
+      <tr>
+        <td><strong>Semester</strong></td>
+        <td class="field-cell">{{ form.semester }}</td>
+        <td><strong>Medium</strong></td>
+        <td class="field-cell">{{ form.medium }}</td>
+      </tr>
+    </table>
+
+    <div class="px-2 pt-2 tiny-note text-success">
+      If seat number is empty, it will be auto-generated and saved in backend on submit.
+    </div>
+
+    <table class="sheet-table">
+      <tr>
+        <th colspan="10" class="sheet-section">2. Applied Subjects Information</th>
+      </tr>
+      <tr>
+        <th width="7%">Tick</th>
+        <th width="5%">Sr</th>
+        <th width="14%">Sub Code</th>
+        <th>Subject Name</th>
+        <th width="6%">Int</th>
+        <th width="6%">Ext</th>
+        <th width="6%">Pr</th>
+        <th width="6%">Or</th>
+      </tr>
+      {% for s in subject_rows %}
+      <tr>
+        <td class="text-center">
+          <input
+            type="checkbox"
+            name="selected_subject_codes"
+            value="{{ s.code }}"
+            {% if s.code in selected_subject_codes %}checked{% endif %}
+          >
+        </td>
+        <td>{{ forloop.counter }}</td>
+        <td>{{ s.code }}</td>
+        <td>{{ s.name }}</td>
+        <td class="text-center"><input type="checkbox" name="comp_int_{{ s.code }}" {% if s.checked_int %}checked{% endif %}></td>
+        <td class="text-center"><input type="checkbox" name="comp_th_{{ s.code }}" {% if s.checked_th %}checked{% endif %}></td>
+        <td class="text-center"><input type="checkbox" name="comp_onl_{{ s.code }}" {% if s.checked_onl %}checked{% endif %}></td>
+        <td class="text-center"><input type="checkbox" name="comp_pr_{{ s.code }}" {% if s.checked_pr %}checked{% endif %}></td>
+        <td class="text-center"><input type="checkbox" name="comp_or_{{ s.code }}" {% if s.checked_or %}checked{% endif %}></td>
+      </tr>
+      {% endfor %}
+    </table>
+
+    <div class="px-2 pt-2 tiny-note">
+      Tick the checkbox manually for each subject you want to apply.
+    </div>
+    <div class="px-2 tiny-note fw-semibold">
+      Selected Subjects: <span id="selected-subject-count">{{ selected_subject_count }}</span> / {{ total_subject_count }}
+    </div>
+    <div class="d-flex justify-content-end p-2 tiny-note">
+      Print Date: {{ print_date|date:"d/m/Y h:i A" }}
+    </div>
+  </div>
+
+  <div class="print-divider"></div>
+
+  <div class="exam-sheet mb-3">
+    <div class="sheet-header">
+      <div class="sheet-title">Savitribai Phule Pune University</div>
+      <div class="sheet-subtitle">Examination Form (Mar/Apr 2025)</div>
+    </div>
+
+    <table class="sheet-table">
+      <tr>
+        <th colspan="3" class="sheet-section">3. Fee Details</th>
+      </tr>
+      <tr>
+        <th width="50%">Fee Type</th>
+        <th width="25%">Fee Amount</th>
+        <th width="25%">Remarks</th>
+      </tr>
+      {% for row in fee_rows %}
+      <tr>
+        <td>{{ row.label }}</td>
+        <td>
+          {% if row.label == 'Exam Fee' %}
+          <span id="exam-fee-amount">{{ row.amount }}</span>
+          {% else %}
+          {{ row.amount }}
+          {% endif %}
+        </td>
+        <td>
+          {% if row.label == 'Exam Fee' %}
+          <span id="exam-fee-remarks">{{ row.remarks }}</span>
+          {% else %}
+          {{ row.remarks }}
+          {% endif %}
+        </td>
+      </tr>
+      {% endfor %}
+      <tr>
+        <td><strong>Total Fee To Be Paid</strong></td>
+        <td><strong id="total-fee-amount">{{ total_fee }}</strong></td>
+        <td></td>
+      </tr>
+    </table>
+
+    <div class="p-2">
+      <div class="fw-semibold mb-1">DECLARATION</div>
+      <p class="tiny-note mb-2">
+        I hereby declare that I have gone through the syllabus and that all particulars provided are correct.
+        I shall be responsible for any wrong or incomplete entries made by me in the Examination Form.
+      </p>
+      <div class="form-check">
+        {{ form.declaration }}
+        <label class="form-check-label" for="{{ form.declaration.id_for_label }}">
+          I confirm this declaration and agree to university rules.
+        </label>
+      </div>
+      {% for error in form.declaration.errors %}
+      <div class="invalid-feedback d-block">{{ error }}</div>
+      {% endfor %}
+    </div>
+  </div>
+
+  <div class="flow-actions d-flex gap-2">
+    <button type="submit" class="btn btn-primary">Submit Form and Generate Hall Ticket</button>
+    <a href="{% url 'students:college_hall_ticket' %}" class="btn btn-outline-primary">Open Hall Ticket Page</a>
+  </div>
+</form>
+
+<script>
+  (function () {
+    var checkboxes = document.querySelectorAll('input[name="selected_subject_codes"]');
+    if (!checkboxes.length) return;
+
+    var selectedCountEl = document.getElementById('selected-subject-count');
+    var examFeeAmountEl = document.getElementById('exam-fee-amount');
+    var examFeeRemarksEl = document.getElementById('exam-fee-remarks');
+    var totalFeeAmountEl = document.getElementById('total-fee-amount');
+
+    var perSubject = parseFloat('{{ exam_fee_per_subject|default:"0" }}') || 0;
+    var baseTotal =
+      (parseFloat('{{ fee_config.form_fee|default:"0" }}') || 0) +
+      (parseFloat('{{ fee_config.statement_fee|default:"0" }}') || 0) +
+      (parseFloat('{{ fee_config.cap_fee|default:"0" }}') || 0) +
+      (parseFloat('{{ fee_config.late_fee|default:"0" }}') || 0) +
+      (parseFloat('{{ fee_config.fine_fee|default:"0" }}') || 0);
+
+    function toAmount(value) {
+      return (Math.round(value * 100) / 100).toFixed(2);
+    }
+
+    function recalcFees() {
+      var selected = 0;
+      checkboxes.forEach(function (cb) {
+        if (cb.checked) selected += 1;
+      });
+
+      var examFee = selected * perSubject;
+      var total = baseTotal + examFee;
+
+      if (selectedCountEl) selectedCountEl.textContent = String(selected);
+      if (examFeeAmountEl) examFeeAmountEl.textContent = toAmount(examFee);
+      if (examFeeRemarksEl) examFeeRemarksEl.textContent = selected + ' subject(s) x ' + toAmount(perSubject);
+      if (totalFeeAmountEl) totalFeeAmountEl.textContent = toAmount(total);
+    }
+
+    checkboxes.forEach(function (cb) {
+      cb.addEventListener('change', recalcFees);
+    });
+    recalcFees();
+  })();
+</script>
+{% endblock %}

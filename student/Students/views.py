@@ -1,5 +1,5 @@
 from django.shortcuts import render
-from django.urls import reverse_lazy
+from django.urls import reverse, reverse_lazy
 from django.views.generic import ListView, DetailView, CreateView, UpdateView, DeleteView, TemplateView
 from django.views.generic.edit import FormView
 from django.contrib.auth.mixins import LoginRequiredMixin
@@ -9,7 +9,10 @@ from .models import (
 	AdmissionApplication,
 	AttendanceRecord,
 	ExamSchedule,
+	Subject,
 	ExamResult,
+	ExamFormSubmission,
+	ExamFormSubjectSelection,
 	FeeStructure,
 	FeeInvoice,
 	FeePayment,
@@ -29,6 +32,8 @@ from .forms import (
 	RoomForm,
 	TimetableEntryForm,
 	OnlineResultSearchForm,
+	HallTicketSearchForm,
+	ExamFormSubmissionForm,
 )
 from django.contrib import messages
 from django.contrib.auth import logout
@@ -40,9 +45,11 @@ from django.contrib.auth.decorators import user_passes_test
 from django.views.decorators.cache import never_cache
 from django.db.models import Q, Sum, Count, Max
 import csv
+import random
 from decimal import Decimal, ROUND_HALF_UP
 from datetime import date
 import re
+from urllib.parse import urlencode
 
 
 @method_decorator(never_cache, name='dispatch')
@@ -633,9 +640,13 @@ class FeeStructureListView(StaffRequiredMixin, ListView):
 			admission_fee, first_sem, second_sem, third_sem, fourth_sem = self._course_fee_breakdown(
 				structure.course, structure.total_amount
 			)
+			exam_fee = structure.total_amount - admission_fee
 			display_structures.append({
 				'structure': structure,
 				'admission_fee': admission_fee,
+
+
+				'exam_fee': exam_fee,
 				'first_sem': first_sem,
 				'second_sem': second_sem,
 				'third_sem': third_sem,
@@ -903,6 +914,447 @@ class CollegeContactView(TemplateView):
 		return context
 
 
+class CollegeExamStudentLoginView(TemplateView):
+	template_name = 'Students/college/exam_student_login.html'
+
+	def _generate_captcha(self):
+		return ''.join(str(random.randint(0, 9)) for _ in range(5))
+
+	def get_context_data(self, **kwargs):
+		context = super().get_context_data(**kwargs)
+		context.update(_college_site_context())
+		context['lookup_error'] = kwargs.get('lookup_error')
+		context['support_phone'] = kwargs.get('support_phone', '+91 020-71533633')
+		context['support_email'] = kwargs.get('support_email', 'examsupport@pun.unipune.ac.in')
+		context['captcha_code'] = kwargs.get('captcha_code') or self._generate_captcha()
+		return context
+
+	def post(self, request, *args, **kwargs):
+		login_by = request.POST.get('login_by', '').strip()
+		password = request.POST.get('password', '').strip()
+		mobile_number = request.POST.get('mobile_number', '').strip()
+		captcha_text = request.POST.get('captcha_text', '').strip()
+		captcha_expected = request.POST.get('captcha_expected', '').strip()
+		if not login_by or not password or not mobile_number or not captcha_text:
+			context = self.get_context_data(
+				lookup_error='Please fill Login By, Password, Mobile Number, and Captcha to continue.',
+				captcha_code=self._generate_captcha(),
+			)
+			return self.render_to_response(context)
+		if captcha_text != captcha_expected:
+			context = self.get_context_data(
+				lookup_error='Captcha text is incorrect. Please try again.',
+				captcha_code=self._generate_captcha(),
+			)
+			return self.render_to_response(context)
+		return redirect('students:college_exam_student_dashboard')
+
+
+class CollegeExamStudentDashboardView(TemplateView):
+	template_name = 'Students/college/exam_student_dashboard.html'
+
+	def get_context_data(self, **kwargs):
+		context = super().get_context_data(**kwargs)
+		context.update(_college_site_context())
+		context['demo_rows'] = [
+			{
+				'learning_mode': 'Regular',
+				'prn': '2032400466',
+				'eligibility': '12024224520',
+				'course_name': 'Master of Computer Application (M.C.A.)',
+				'pattern_name': 'MCA(MANAGEMENT)2024 Credit Pattern',
+				'college_puncode': 'IMMA016370',
+				'college_name': 'Institute of Management Studies, Career Development & Research',
+				'student_name': 'KARANJKAR SOURABH VIJAYKUMAR',
+				'mother_name': 'KARANJKAR NILIMA VIJAYKUMAR',
+				'profile_status': 'Profile complete.',
+			},
+		]
+		return context
+
+
+class CollegeExamPortalView(TemplateView):
+	template_name = 'Students/college/exam_form_portal.html'
+
+	def get_context_data(self, **kwargs):
+		context = super().get_context_data(**kwargs)
+		context.update(_college_site_context())
+		context['support_phone'] = '020-71533633'
+		context['support_email'] = 'examsupport@pun.unipune.ac.in'
+		context['notices'] = [
+			'SEF office holiday on 1st and 3rd Saturday every month.',
+			'Office call working hours are 10:30 AM to 6:00 PM.',
+		]
+		context['rules'] = [
+			'Students can fill online exam form by creating their student profile.',
+			'After filling the form, submit inward request through respective college.',
+			'College will inward the submitted application number.',
+			'Online payment option becomes available only after inward approval.',
+		]
+		return context
+
+
+class CollegeExamDashboardView(TemplateView):
+	template_name = 'Students/college/exam_form_dashboard.html'
+
+	def get_context_data(self, **kwargs):
+		context = super().get_context_data(**kwargs)
+		context.update(_college_site_context())
+		submissions = (
+			ExamFormSubmission.objects.select_related('student')
+			.order_by('-submitted_at')[:10]
+		)
+		context['submissions'] = submissions
+		return context
+
+
+class CollegeExamFormView(TemplateView):
+	template_name = 'Students/college/exam_form.html'
+
+	def _default_subject_rows(self):
+		return [
+			{'code': 'MCA101', 'name': 'Advanced DBMS', 'internal': 'N', 'theory': 'Y', 'online': 'N', 'practical': 'N', 'oral': 'N'},
+			{'code': 'MCA102', 'name': 'Data Structures and Algorithms', 'internal': 'N', 'theory': 'Y', 'online': 'N', 'practical': 'N', 'oral': 'N'},
+			{'code': 'MCA103', 'name': 'Computer Networks', 'internal': 'N', 'theory': 'Y', 'online': 'N', 'practical': 'N', 'oral': 'N'},
+			{'code': 'MCA104', 'name': 'Java Programming', 'internal': 'N', 'theory': 'Y', 'online': 'N', 'practical': 'N', 'oral': 'N'},
+			{'code': 'MCA105', 'name': 'Project Management', 'internal': 'N', 'theory': 'Y', 'online': 'N', 'practical': 'N', 'oral': 'N'},
+		]
+
+	def _subject_rows_for_course(self, course_name):
+		course = (course_name or '').strip()
+		if not course:
+			return self._default_subject_rows()
+
+		# First source of truth: dedicated subject master for the course.
+		subject_qs = Subject.objects.filter(course__iexact=course, is_active=True).order_by('code')
+		subject_rows = [
+			{'code': s.code, 'name': s.name, 'internal': 'N', 'theory': 'Y', 'online': 'N', 'practical': 'N', 'oral': 'N'}
+			for s in subject_qs
+		]
+		if subject_rows:
+			return subject_rows
+
+		# Bootstrap subject master from exam schedules if no subject master exists yet.
+		schedules = ExamSchedule.objects.filter(course__iexact=course).order_by('subject')[:12]
+		for idx, schedule in enumerate(schedules, start=1):
+			base_code = (schedule.subject[:8] or f"SUBJ{idx:03d}").upper().replace(' ', '')
+			subject_obj, _ = Subject.objects.get_or_create(
+				course=course,
+				code=base_code,
+				defaults={'name': schedule.subject, 'is_active': True},
+			)
+			if subject_obj.name != schedule.subject:
+				subject_obj.name = schedule.subject
+				subject_obj.save(update_fields=['name'])
+			subject_rows.append({
+				'code': subject_obj.code,
+				'name': subject_obj.name,
+				'internal': 'N',
+				'theory': 'N' if schedule.exam_type == ExamSchedule.ExamType.PRACTICAL else 'Y',
+				'online': 'N',
+				'practical': 'Y' if schedule.exam_type == ExamSchedule.ExamType.PRACTICAL else 'N',
+				'oral': 'N',
+			})
+		if subject_rows:
+			return subject_rows
+
+		# Final fallback defaults + seed Subject master for this course.
+		default_rows = self._default_subject_rows()
+		for row in default_rows:
+			Subject.objects.get_or_create(
+				course=course,
+				code=row['code'],
+				defaults={'name': row['name'], 'is_active': True},
+			)
+		return default_rows
+
+	def _fee_rows(self):
+		return {
+			'form_fee': 30,
+			'full_exam_fee': 2200,
+			'statement_fee': 145,
+			'cap_fee': 290,
+			'late_fee': 0,
+			'fine_fee': 0,
+		}
+
+	def _fee_breakdown(self, selected_subject_count, total_subject_count):
+		fee_config = self._fee_rows()
+		total_subject_count = max(total_subject_count, 1)
+		exam_fee_per_subject = round(fee_config['full_exam_fee'] / total_subject_count, 2)
+		exam_fee = round(exam_fee_per_subject * selected_subject_count, 2)
+		fee_rows = [
+			{'label': 'Form Fee', 'amount': fee_config['form_fee'], 'remarks': ''},
+			{'label': 'Exam Fee', 'amount': exam_fee, 'remarks': f"{selected_subject_count} subject(s) x {exam_fee_per_subject}"},
+			{'label': 'Statement of Marks Fee', 'amount': fee_config['statement_fee'], 'remarks': ''},
+			{'label': 'CAP Fee', 'amount': fee_config['cap_fee'], 'remarks': ''},
+			{'label': 'Late Fee', 'amount': fee_config['late_fee'], 'remarks': ''},
+			{'label': 'Fine Fee', 'amount': fee_config['fine_fee'], 'remarks': ''},
+		]
+		total_fee = round(sum(row['amount'] for row in fee_rows), 2)
+		return fee_rows, total_fee, exam_fee_per_subject
+
+	def get_context_data(self, **kwargs):
+		context = super().get_context_data(**kwargs)
+		context.update(_college_site_context())
+		form = kwargs.get('form') or ExamFormSubmissionForm(initial={'exam_session': '2026-27', 'medium': 'English'})
+		context['form'] = form
+		context['submitted'] = kwargs.get('submitted', False)
+		context['lookup_error'] = kwargs.get('lookup_error')
+		context['student_match'] = kwargs.get('student_match')
+		context['submission'] = kwargs.get('submission')
+
+		seat_number = ''
+		if hasattr(form, 'cleaned_data') and form.is_bound:
+			seat_number = form.cleaned_data.get('seat_number', '') if form.is_valid() else form.data.get('seat_number', '')
+		elif hasattr(form, 'initial'):
+			seat_number = form.initial.get('seat_number', '')
+		seat_number = (seat_number or '').strip().upper()
+		student_preview = Student.objects.filter(seat_number__iexact=seat_number).first() if seat_number else None
+		if not student_preview and form.is_bound:
+			email = (form.data.get('email') or '').strip().lower()
+			if email:
+				student_preview = Student.objects.filter(email__iexact=email).first()
+
+		course_name = ''
+		if form.is_bound:
+			course_name = (form.data.get('course') or '').strip()
+		if not course_name and student_preview:
+			course_name = student_preview.course
+		subject_rows = self._subject_rows_for_course(course_name)
+		selected_subject_codes = kwargs.get('selected_subject_codes')
+		submission = context.get('submission')
+		saved_selections = {}
+		if submission:
+			selection_qs = submission.subject_selections.select_related('subject')
+			for sel in selection_qs:
+				saved_selections[sel.subject.code] = {
+					'is_selected': sel.is_selected,
+					'int': sel.component_internal,
+					'th': sel.component_theory,
+					'onl': sel.component_online,
+					'pr': sel.component_practical,
+					'or': sel.component_oral,
+				}
+		if selected_subject_codes is None:
+			if form.is_bound:
+				selected_subject_codes = form.data.getlist('selected_subject_codes')
+			elif saved_selections:
+				selected_subject_codes = [code for code, data in saved_selections.items() if data.get('is_selected')]
+			elif submission and submission.selected_subject_codes:
+				selected_subject_codes = [code.strip() for code in submission.selected_subject_codes.split(',') if code.strip()]
+			else:
+				selected_subject_codes = [row['code'] for row in subject_rows]
+		selected_subject_count = len([code for code in selected_subject_codes if code])
+		component_selection = {}
+		component_keys = ['int', 'th', 'onl', 'pr', 'or']
+		if form.is_bound:
+			for row in subject_rows:
+				code = row['code']
+				selected_components = set()
+				for key in component_keys:
+					if f"comp_{key}_{code}" in form.data:
+						selected_components.add(key)
+				component_selection[code] = selected_components
+		else:
+			for row in subject_rows:
+				code = row['code']
+				selected_components = set()
+				if code in saved_selections:
+					if saved_selections[code].get('int'):
+						selected_components.add('int')
+					if saved_selections[code].get('th'):
+						selected_components.add('th')
+					if saved_selections[code].get('onl'):
+						selected_components.add('onl')
+					if saved_selections[code].get('pr'):
+						selected_components.add('pr')
+					if saved_selections[code].get('or'):
+						selected_components.add('or')
+				elif row.get('internal') == 'Y':
+					selected_components.add('int')
+				if row.get('theory') == 'Y':
+					selected_components.add('th')
+				if row.get('online') == 'Y':
+					selected_components.add('onl')
+				if row.get('practical') == 'Y':
+					selected_components.add('pr')
+				if row.get('oral') == 'Y':
+					selected_components.add('or')
+				component_selection[code] = selected_components
+		for row in subject_rows:
+			selected_components = component_selection.get(row['code'], set())
+			row['checked_int'] = 'int' in selected_components
+			row['checked_th'] = 'th' in selected_components
+			row['checked_onl'] = 'onl' in selected_components
+			row['checked_pr'] = 'pr' in selected_components
+			row['checked_or'] = 'or' in selected_components
+
+		fee_rows, total_fee, exam_fee_per_subject = self._fee_breakdown(selected_subject_count, len(subject_rows))
+		fee_config = self._fee_rows()
+		context['student_preview'] = student_preview
+		context['subject_rows'] = subject_rows
+		context['selected_subject_codes'] = selected_subject_codes
+		context['selected_subject_count'] = selected_subject_count
+		context['total_subject_count'] = len(subject_rows)
+		context['fee_rows'] = fee_rows
+		context['total_fee'] = total_fee
+		context['exam_fee_per_subject'] = exam_fee_per_subject
+		context['fee_config'] = fee_config
+		context['print_date'] = timezone.localtime()
+		return context
+
+	def post(self, request, *args, **kwargs):
+		form = ExamFormSubmissionForm(request.POST)
+		if form.is_valid():
+			seat_number = form.cleaned_data['seat_number']
+			date_of_birth = form.cleaned_data.get('date_of_birth')
+			first_name = form.cleaned_data['first_name']
+			last_name = form.cleaned_data['last_name']
+			email = form.cleaned_data['email'].strip().lower()
+			course = form.cleaned_data['course'].strip()
+			mother_name = form.cleaned_data.get('mother_name', '').strip()
+			father_name = form.cleaned_data.get('father_name', '').strip()
+			parent_name = form.cleaned_data.get('parent_name', '').strip()
+			address = form.cleaned_data.get('address', '').strip()
+			mobile_number = form.cleaned_data.get('mobile_number', '').strip()
+			gender = form.cleaned_data.get('gender', '').strip()
+			category = form.cleaned_data.get('category', '').strip()
+			medium = form.cleaned_data.get('medium', '').strip() or 'English'
+			semester = form.cleaned_data['semester']
+			exam_session = form.cleaned_data['exam_session']
+			selected_subject_codes = [code.strip().upper() for code in request.POST.getlist('selected_subject_codes') if code.strip()]
+			course_subject_rows = self._subject_rows_for_course(course)
+
+			student_match = None
+			if seat_number:
+				student_match = Student.objects.filter(seat_number__iexact=seat_number).first()
+				if not student_match:
+					context = self.get_context_data(
+						form=form,
+						submitted=True,
+						lookup_error='Seat number not found. Leave seat number blank to auto-generate, or enter a valid existing seat number.',
+					)
+					return self.render_to_response(context)
+			else:
+				student_match = Student.objects.filter(email__iexact=email).first()
+
+			existing_dob = student_match.date_of_birth if student_match else None
+			if not student_match:
+				student_match = Student(
+					first_name=first_name,
+					last_name=last_name,
+					email=email,
+					enrollment_date=timezone.localdate(),
+					course=course,
+					is_active=True,
+				)
+			email_owner = Student.objects.filter(email__iexact=email).exclude(pk=student_match.pk).first() if student_match.pk else Student.objects.filter(email__iexact=email).first()
+			if email_owner:
+				context = self.get_context_data(
+					form=form,
+					submitted=True,
+					lookup_error='This email is already used by another student record. Use a different email or matching seat number.',
+				)
+				return self.render_to_response(context)
+
+			student_match.first_name = first_name
+			student_match.last_name = last_name
+			student_match.email = email
+			student_match.course = course
+			student_match.date_of_birth = date_of_birth
+			student_match.mother_name = mother_name
+			student_match.father_name = father_name
+			student_match.parent_name = parent_name
+			if seat_number:
+				student_match.seat_number = seat_number
+			student_match.save()
+
+			if date_of_birth and existing_dob and existing_dob != date_of_birth:
+				context = self.get_context_data(
+					form=form,
+					submitted=True,
+					lookup_error='DOB verification failed. Please enter the correct date of birth.',
+				)
+				return self.render_to_response(context)
+
+			valid_subject_codes = {row['code'] for row in course_subject_rows}
+			selected_subject_codes = [code for code in selected_subject_codes if code in valid_subject_codes]
+			if not selected_subject_codes:
+				context = self.get_context_data(
+					form=form,
+					submitted=True,
+					student_match=student_match,
+					lookup_error='Please tick at least one subject in Applied Subject Information.',
+					selected_subject_codes=selected_subject_codes,
+				)
+				return self.render_to_response(context)
+
+			submission, _ = ExamFormSubmission.objects.update_or_create(
+				student=student_match,
+				semester=semester,
+				exam_session=exam_session,
+				defaults={
+					'address': address,
+					'mobile_number': mobile_number,
+					'gender': gender,
+					'category': category,
+					'medium': medium,
+					'selected_subject_codes': ','.join(selected_subject_codes),
+					'declaration_accepted': form.cleaned_data['declaration'],
+				},
+			)
+			component_map = {}
+			for row in course_subject_rows:
+				code = row['code']
+				component_map[code] = {
+					'int': f"comp_int_{code}" in request.POST,
+					'th': f"comp_th_{code}" in request.POST,
+					'onl': f"comp_onl_{code}" in request.POST,
+					'pr': f"comp_pr_{code}" in request.POST,
+					'or': f"comp_or_{code}" in request.POST,
+				}
+
+			# Keep per-subject component selections in normalized backend storage.
+			kept_subject_ids = []
+			for row in course_subject_rows:
+				code = row['code']
+				subject_obj, _ = Subject.objects.get_or_create(
+					course=course,
+					code=code,
+					defaults={'name': row['name'], 'is_active': True},
+				)
+				kept_subject_ids.append(subject_obj.id)
+				components = component_map.get(code, {})
+				is_selected = code in selected_subject_codes
+				if is_selected and not any(components.values()):
+					components['th'] = True
+				ExamFormSubjectSelection.objects.update_or_create(
+					submission=submission,
+					subject=subject_obj,
+					defaults={
+						'is_selected': is_selected,
+						'component_internal': bool(components.get('int')),
+						'component_theory': bool(components.get('th')),
+						'component_online': bool(components.get('onl')),
+						'component_practical': bool(components.get('pr')),
+						'component_oral': bool(components.get('or')),
+					},
+				)
+			ExamFormSubjectSelection.objects.filter(submission=submission).exclude(subject_id__in=kept_subject_ids).delete()
+
+			query = urlencode({
+				'seat_number': student_match.seat_number,
+				'exam_session': submission.exam_session,
+				'semester': submission.semester,
+				'from_exam_form': '1',
+			})
+			return redirect(f"{reverse('students:college_hall_ticket')}?{query}")
+
+		context = self.get_context_data(form=form, submitted=True)
+		return self.render_to_response(context)
+
+
 class CollegeOnlineResultView(TemplateView):
 	template_name = 'Students/college/results.html'
 
@@ -937,6 +1389,7 @@ class CollegeOnlineResultView(TemplateView):
 		context['results'] = kwargs.get('results')
 		context['student_match'] = kwargs.get('student_match')
 		context['lookup_error'] = kwargs.get('lookup_error')
+		context['print_ready'] = kwargs.get('print_ready', False)
 		return context
 
 	def post(self, request, *args, **kwargs):
@@ -953,8 +1406,6 @@ class CollegeOnlineResultView(TemplateView):
 
 		if form.is_valid():
 			seat_number = form.cleaned_data['seat_number']
-			mother_name = form.cleaned_data['mother_name']
-			father_name = form.cleaned_data['father_name']
 			seat_student = Student.objects.filter(seat_number__iexact=seat_number).first()
 			if not seat_student:
 				context = self.get_context_data(
@@ -965,34 +1416,7 @@ class CollegeOnlineResultView(TemplateView):
 				)
 				return self.render_to_response(context)
 
-			has_parent_data = any([
-				(seat_student.mother_name or '').strip(),
-				(seat_student.father_name or '').strip(),
-				(seat_student.parent_name or '').strip(),
-			])
-			if not has_parent_data:
-				context = self.get_context_data(
-					form=form,
-					searched=True,
-					selected_course=selected_course,
-					lookup_error='Student profile is incomplete: mother/father name is not saved by admin.',
-				)
-				return self.render_to_response(context)
-
-			student_match = Student.objects.filter(
-				pk=seat_student.pk
-			).filter(
-				Q(mother_name__iexact=mother_name) | Q(parent_name__iexact=mother_name),
-				Q(father_name__iexact=father_name) | Q(parent_name__iexact=father_name),
-			).first()
-			if not student_match:
-				context = self.get_context_data(
-					form=form,
-					searched=True,
-					selected_course=selected_course,
-					lookup_error='Seat found, but mother/father name does not match our records.',
-				)
-				return self.render_to_response(context)
+			student_match = seat_student
 
 			results_qs = ExamResult.objects.select_related('exam').filter(
 				student=student_match,
@@ -1017,10 +1441,167 @@ class CollegeOnlineResultView(TemplateView):
 				results=results,
 				student_match=student_match,
 				selected_course=selected_course,
+				print_ready=bool(results),
 			)
 			return self.render_to_response(context)
 
 		context = self.get_context_data(form=form, searched=True, selected_course=selected_course)
+		return self.render_to_response(context)
+
+
+
+class CollegeHallTicketView(TemplateView):
+	template_name = 'Students/college/hall_ticket.html'
+
+	def _exam_schedules_for_student(self, student, exam_form_submission=None):
+		exam_schedules = list(
+			ExamSchedule.objects.filter(course__iexact=student.course).order_by('exam_date', 'start_time')
+		)
+		if exam_schedules:
+			return exam_schedules
+
+		# Fallback 1: use structured subject selections from exam form.
+		if not exam_form_submission:
+			return []
+		selection_qs = exam_form_submission.subject_selections.select_related('subject').filter(is_selected=True)
+		if selection_qs.exists():
+			fallback_rows = []
+			for sel in selection_qs:
+				fallback_rows.append({
+					'subject': sel.subject.name,
+					'title': f"{sel.subject.code} - As per Exam Form",
+					'exam_date': None,
+					'start_time': None,
+					'end_time': None,
+					'room': '',
+				})
+			return fallback_rows
+
+		# Fallback 2: backward compatibility for old text-based submissions.
+		if not exam_form_submission.selected_subject_codes:
+			return []
+		codes = [
+			code.strip().upper()
+			for code in exam_form_submission.selected_subject_codes.split(',')
+			if code.strip()
+		]
+		if not codes:
+			return []
+
+		fallback_rows = []
+		for code in codes:
+			subject_obj = Subject.objects.filter(course__iexact=student.course, code=code).first()
+			subject_name = subject_obj.name if subject_obj else code
+			fallback_rows.append({
+				'subject': subject_name,
+				'title': f"{code} - As per Exam Form",
+				'exam_date': None,
+				'start_time': None,
+				'end_time': None,
+				'room': '',
+			})
+		return fallback_rows
+
+	def get_context_data(self, **kwargs):
+		context = super().get_context_data(**kwargs)
+		context.update(_college_site_context())
+		context['form'] = kwargs.get('form') or HallTicketSearchForm()
+		context['searched'] = kwargs.get('searched', False)
+		context['lookup_error'] = kwargs.get('lookup_error')
+		context['lookup_warning'] = kwargs.get('lookup_warning')
+		context['flow_message'] = kwargs.get('flow_message')
+		context['student_match'] = kwargs.get('student_match')
+		context['exam_schedules'] = kwargs.get('exam_schedules')
+		context['exam_form_submission'] = kwargs.get('exam_form_submission')
+		context['hall_instructions'] = [
+			'Carry a printed hall ticket and valid photo ID to the exam center.',
+			'Reach the exam center at least 30 minutes before exam start time.',
+			'Electronic gadgets and unfair means are strictly prohibited.',
+			'Verify seat number, subject, and exam center before entering the hall.',
+		]
+		context['generated_on'] = timezone.localdate()
+		return context
+
+	def get(self, request, *args, **kwargs):
+		seat_number = request.GET.get('seat_number', '').strip().upper()
+		if seat_number:
+			student_match = Student.objects.filter(seat_number__iexact=seat_number).first()
+			if not student_match:
+				context = self.get_context_data(
+					form=HallTicketSearchForm(initial={'seat_number': seat_number}),
+					searched=True,
+					lookup_error='Seat number not found. Enter the exact seat number from UniPune hall ticket (example: S01423). If it still fails, contact college admin.',
+				)
+				return self.render_to_response(context)
+
+			exam_form_submission = ExamFormSubmission.objects.filter(student=student_match).order_by('-submitted_at').first()
+			exam_session = request.GET.get('exam_session', '').strip()
+			semester = request.GET.get('semester', '').strip()
+			if exam_session or semester:
+				qs = ExamFormSubmission.objects.filter(student=student_match)
+				if exam_session:
+					qs = qs.filter(exam_session=exam_session)
+				if semester:
+					qs = qs.filter(semester=semester)
+				exam_form_submission = qs.order_by('-submitted_at').first() or exam_form_submission
+			exam_schedules = self._exam_schedules_for_student(student_match, exam_form_submission)
+
+			flow_message = None
+			if request.GET.get('from_exam_form') == '1':
+				flow_message = 'Exam form submitted successfully. Hall ticket has been generated from your exam form details.'
+
+			context = self.get_context_data(
+				form=HallTicketSearchForm(initial={'seat_number': seat_number}),
+				searched=True,
+				student_match=student_match,
+				exam_schedules=exam_schedules,
+				exam_form_submission=exam_form_submission,
+				flow_message=flow_message,
+			)
+			return self.render_to_response(context)
+		return super().get(request, *args, **kwargs)
+
+	def post(self, request, *args, **kwargs):
+		form = HallTicketSearchForm(request.POST)
+		if form.is_valid():
+			seat_number = form.cleaned_data['seat_number']
+			date_of_birth = form.cleaned_data.get('date_of_birth')
+			student_match = Student.objects.filter(seat_number__iexact=seat_number).first()
+			if not student_match:
+				context = self.get_context_data(
+					form=form,
+					searched=True,
+					lookup_error='Seat number not found. Enter the exact seat number from UniPune hall ticket (example: S01423). If it still fails, contact college admin.',
+				)
+				return self.render_to_response(context)
+
+			lookup_warning = None
+			if date_of_birth:
+				if student_match.date_of_birth and student_match.date_of_birth != date_of_birth:
+					context = self.get_context_data(
+						form=form,
+						searched=True,
+						lookup_error='DOB verification failed. Please enter the correct date of birth.',
+					)
+					return self.render_to_response(context)
+				if not student_match.date_of_birth:
+					# If DOB is missing in profile, persist the provided DOB for future verification.
+					student_match.date_of_birth = date_of_birth
+					student_match.save(update_fields=['date_of_birth'])
+
+			exam_form_submission = ExamFormSubmission.objects.filter(student=student_match).order_by('-submitted_at').first()
+			exam_schedules = self._exam_schedules_for_student(student_match, exam_form_submission)
+			context = self.get_context_data(
+				form=form,
+				searched=True,
+				student_match=student_match,
+				exam_schedules=exam_schedules,
+				exam_form_submission=exam_form_submission,
+				lookup_warning=lookup_warning,
+			)
+			return self.render_to_response(context)
+
+		context = self.get_context_data(form=form, searched=True)
 		return self.render_to_response(context)
 
 

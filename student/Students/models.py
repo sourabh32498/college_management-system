@@ -1,8 +1,10 @@
-from django.db import models
+from django.db import models, transaction
+import re
 
 
 class Student(models.Model):
 	seat_number = models.CharField(max_length=30, unique=True, null=True, blank=True)
+	date_of_birth = models.DateField(null=True, blank=True)
 	mother_name = models.CharField(max_length=120, blank=True)
 	father_name = models.CharField(max_length=120, blank=True)
 	parent_name = models.CharField(max_length=120, blank=True)
@@ -21,6 +23,27 @@ class Student(models.Model):
 
 	def __str__(self):
 		return f"{self.first_name} {self.last_name}"
+
+	@classmethod
+	def _generate_seat_number(cls):
+		max_number = 0
+		for value in cls.objects.exclude(seat_number__isnull=True).exclude(seat_number='').values_list('seat_number', flat=True):
+			match = re.match(r'^S(\d+)$', (value or '').strip().upper())
+			if not match:
+				continue
+			max_number = max(max_number, int(match.group(1)))
+		return f"S{max_number + 1:05d}"
+
+	def save(self, *args, **kwargs):
+		if self.seat_number:
+			self.seat_number = self.seat_number.strip().upper()
+		with transaction.atomic():
+			if not self.seat_number:
+				candidate = self._generate_seat_number()
+				while Student.objects.filter(seat_number=candidate).exists():
+					candidate = self._generate_seat_number()
+				self.seat_number = candidate
+			super().save(*args, **kwargs)
 
 
 class AdmissionApplication(models.Model):
@@ -93,6 +116,62 @@ class ExamSchedule(models.Model):
 
 	def __str__(self):
 		return f"{self.title} - {self.subject} ({self.exam_date})"
+
+
+class Subject(models.Model):
+	code = models.CharField(max_length=30)
+	name = models.CharField(max_length=120)
+	course = models.CharField(max_length=100)
+	is_active = models.BooleanField(default=True)
+	created_at = models.DateTimeField(auto_now_add=True)
+
+	class Meta:
+		ordering = ['course', 'code']
+		unique_together = ('course', 'code')
+
+	def __str__(self):
+		return f"{self.code} - {self.name} ({self.course})"
+
+
+class ExamFormSubmission(models.Model):
+	student = models.ForeignKey(Student, on_delete=models.CASCADE, related_name='exam_form_submissions')
+	semester = models.CharField(max_length=20, help_text='e.g. SEM-1')
+	exam_session = models.CharField(max_length=20, help_text='e.g. 2026-27')
+	address = models.CharField(max_length=255, blank=True)
+	mobile_number = models.CharField(max_length=20, blank=True)
+	gender = models.CharField(max_length=20, blank=True)
+	category = models.CharField(max_length=20, blank=True)
+	medium = models.CharField(max_length=30, default='English')
+	selected_subject_codes = models.TextField(blank=True, help_text='Comma-separated subject codes selected in exam form')
+	declaration_accepted = models.BooleanField(default=True)
+	submitted_at = models.DateTimeField(auto_now_add=True)
+
+	class Meta:
+		ordering = ['-submitted_at']
+		unique_together = ('student', 'semester', 'exam_session')
+
+	def __str__(self):
+		return f"{self.student} - {self.semester} ({self.exam_session})"
+
+
+class ExamFormSubjectSelection(models.Model):
+	submission = models.ForeignKey(ExamFormSubmission, on_delete=models.CASCADE, related_name='subject_selections')
+	subject = models.ForeignKey(Subject, on_delete=models.PROTECT, related_name='exam_form_selections')
+	is_selected = models.BooleanField(default=True)
+	component_internal = models.BooleanField(default=False)
+	component_theory = models.BooleanField(default=True)
+	component_online = models.BooleanField(default=False)
+	component_practical = models.BooleanField(default=False)
+	component_oral = models.BooleanField(default=False)
+	created_at = models.DateTimeField(auto_now_add=True)
+	updated_at = models.DateTimeField(auto_now=True)
+
+	class Meta:
+		ordering = ['subject__code']
+		unique_together = ('submission', 'subject')
+
+	def __str__(self):
+		return f"{self.submission_id} - {self.subject.code}"
 
 
 class ExamResult(models.Model):

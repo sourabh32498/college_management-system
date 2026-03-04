@@ -1,0 +1,228 @@
+{% extends 'Students/base.html' %}
+
+{% block title %}Hall Ticket | {{ college_name }}{% endblock %}
+
+{% block content %}
+<section class="page-header">
+  <div>
+    <h1 class="page-title">Download Hall Ticket</h1>
+    <p class="page-subtitle">Enter seat number to fetch hall ticket data and print or download a PDF copy.</p>
+  </div>
+</section>
+
+<div class="alert alert-secondary mb-4">
+  <div class="fw-semibold mb-1">Flow Guide</div>
+  <div class="small">
+    Fill Exam Form
+    -> Generate Hall Ticket
+    -> Enter Seat Number (+ optional DOB)
+    -> Submit
+    -> Validate Details
+    -> Show Hall Ticket Preview
+    -> Print or Download PDF
+    -> Open Online Result
+    -> Enter Seat Number and View Result.
+  </div>
+</div>
+
+<div class="card mb-4">
+  <div class="card-header bg-white">
+    <h2 class="h6 mb-0">Step 1: Enter Seat Number Page</h2>
+  </div>
+  <div class="card-body">
+    <form method="post" class="row g-3">
+      {% csrf_token %}
+      <div class="col-md-5">
+        <label class="form-label" for="{{ form.seat_number.id_for_label }}">{{ form.seat_number.label }}</label>
+        {{ form.seat_number }}
+        {% for error in form.seat_number.errors %}
+        <div class="invalid-feedback d-block">{{ error }}</div>
+        {% endfor %}
+      </div>
+      <div class="col-md-4">
+        <label class="form-label" for="{{ form.date_of_birth.id_for_label }}">{{ form.date_of_birth.label }}</label>
+        {{ form.date_of_birth }}
+        {% for error in form.date_of_birth.errors %}
+        <div class="invalid-feedback d-block">{{ error }}</div>
+        {% endfor %}
+      </div>
+      <div class="col-md-3 d-flex align-items-end">
+        <button type="submit" class="btn btn-primary w-100">Submit</button>
+      </div>
+    </form>
+    <p class="small text-body-secondary mb-0 mt-3">Seat Number is required. Date of birth is optional and used for additional verification when available.</p>
+  </div>
+</div>
+
+{% if flow_message %}
+<div class="alert alert-success">{{ flow_message }}</div>
+{% endif %}
+
+{% if searched %}
+  {% if lookup_error %}
+  <div class="alert alert-warning">{{ lookup_error }}</div>
+  {% elif lookup_warning %}
+  <div class="alert alert-info">{{ lookup_warning }}</div>
+  {% elif student_match %}
+  <div class="card mb-4">
+    <div class="card-header bg-white">
+      <h2 class="h6 mb-0">Step 2: Fetch Hall Ticket</h2>
+    </div>
+    <div class="card-body">
+      <p class="mb-0">Seat number validated successfully. Hall ticket data fetched from student and exam records.</p>
+    </div>
+  </div>
+
+  {% if exam_form_submission %}
+  <div class="card mb-4">
+    <div class="card-header bg-white">
+      <h2 class="h6 mb-0">Exam Form Reference</h2>
+    </div>
+    <div class="card-body">
+      <div class="row g-2">
+        <div class="col-md-4"><strong>Session:</strong> {{ exam_form_submission.exam_session }}</div>
+        <div class="col-md-4"><strong>Semester:</strong> {{ exam_form_submission.semester }}</div>
+        <div class="col-md-4"><strong>Submitted:</strong> {{ exam_form_submission.submitted_at|date:"d/m/Y H:i" }}</div>
+      </div>
+    </div>
+  </div>
+  {% endif %}
+
+  <div class="card" id="hall-ticket-preview">
+    <div class="card-header bg-white d-flex justify-content-between align-items-center flex-wrap gap-2">
+      <h2 class="h6 mb-0">Step 3: Display Hall Ticket Preview</h2>
+      <small class="text-body-secondary">Generated on {{ generated_on|date:"d/m/Y" }}</small>
+    </div>
+    <div class="card-body">
+      <div class="text-center mb-3">
+        <div style="width:72px;height:72px;border:2px solid #1f3d7a;border-radius:50%;display:inline-flex;align-items:center;justify-content:center;font-weight:700;color:#1f3d7a;">UOP</div>
+        <div class="fw-semibold mt-2">Savitribai Phule Pune University</div>
+        <div class="text-body-secondary">Examination Hall Ticket</div>
+      </div>
+
+      <div class="row g-2 mb-3">
+        <div class="col-md-6"><strong>Exam Name:</strong> University Semester Examination</div>
+        <div class="col-md-6"><strong>Student Name:</strong> {{ student_match.first_name }} {{ student_match.last_name }}</div>
+        <div class="col-md-6"><strong>Seat Number:</strong> <span id="pdf-seat-number">{{ student_match.seat_number }}</span></div>
+        <div class="col-md-6"><strong>Course Name:</strong> <span id="pdf-course-name">{{ student_match.course }}</span></div>
+        <div class="col-md-6">
+          <strong>Exam Center:</strong>
+          <span id="pdf-exam-center">
+            {% if exam_schedules and exam_schedules.0.room %}
+              {{ exam_schedules.0.room }}
+            {% else %}
+              UniPune Affiliated Exam Center
+            {% endif %}
+          </span>
+        </div>
+        <div class="col-md-6"><strong>Date of Birth:</strong> {{ student_match.date_of_birth|date:"d/m/Y"|default:"-" }}</div>
+      </div>
+
+      <div class="table-responsive">
+        <table class="table align-middle mb-0" id="hall-ticket-subject-table">
+          <thead class="table-light">
+            <tr>
+              <th>Subject List</th>
+              <th>Exam</th>
+              <th>Exam Dates</th>
+              <th>Time</th>
+            </tr>
+          </thead>
+          <tbody>
+            {% for exam in exam_schedules %}
+            <tr>
+              <td>{{ exam.subject }}</td>
+              <td>{{ exam.title }}</td>
+              <td>{{ exam.exam_date|date:"d/m/Y"|default:"TBD" }}</td>
+              <td>
+                {% if exam.start_time and exam.end_time %}
+                  {{ exam.start_time|time:"H:i" }} - {{ exam.end_time|time:"H:i" }}
+                {% else %}
+                  TBD
+                {% endif %}
+              </td>
+            </tr>
+            {% empty %}
+            <tr>
+              <td colspan="4" class="text-center py-4 text-body-secondary">No exam schedule available for this course.</td>
+            </tr>
+            {% endfor %}
+          </tbody>
+        </table>
+      </div>
+
+      <div class="mt-3">
+        <h3 class="h6">Instructions</h3>
+        <ul class="mb-0" id="hall-ticket-instructions">
+          {% for instruction in hall_instructions %}
+          <li>{{ instruction }}</li>
+          {% endfor %}
+        </ul>
+      </div>
+    </div>
+  </div>
+
+  <div class="card mt-4">
+    <div class="card-header bg-white">
+      <h2 class="h6 mb-0">Step 4: Print & Download Options</h2>
+    </div>
+    <div class="card-body">
+      <div class="d-flex gap-2 flex-wrap">
+        <button type="button" class="btn btn-outline-secondary" onclick="window.print()">Print Hall Ticket</button>
+        <button type="button" class="btn btn-primary" id="download-hall-ticket-btn">Download PDF</button>
+        <a href="{% url 'students:college_results' %}?course={{ student_match.course|urlencode }}" class="btn btn-outline-primary">Go to Online Results</a>
+      </div>
+    </div>
+  </div>
+  {% endif %}
+{% endif %}
+
+<script src="https://cdn.jsdelivr.net/npm/jspdf@2.5.1/dist/jspdf.umd.min.js"></script>
+<script>
+  (function () {
+    var downloadBtn = document.getElementById('download-hall-ticket-btn');
+    if (!downloadBtn) return;
+
+    downloadBtn.addEventListener('click', function () {
+      if (!window.jspdf || !window.jspdf.jsPDF) {
+        alert('PDF generator failed to load. Please use Print Hall Ticket option.');
+        return;
+      }
+
+      var jsPDF = window.jspdf.jsPDF;
+      var doc = new jsPDF();
+      var y = 15;
+
+      function line(text, gap) {
+        doc.text(String(text || ''), 14, y);
+        y += gap || 7;
+      }
+
+      line('Savitribai Phule Pune University', 7);
+      line('Examination Hall Ticket', 10);
+      line('Seat Number: ' + (document.getElementById('pdf-seat-number') || {}).textContent, 7);
+      line('Course Name: ' + (document.getElementById('pdf-course-name') || {}).textContent, 7);
+      line('Exam Center: ' + (document.getElementById('pdf-exam-center') || {}).textContent, 10);
+      line('Subjects & Exam Dates:', 7);
+
+      var rows = document.querySelectorAll('#hall-ticket-subject-table tbody tr');
+      rows.forEach(function (row) {
+        var cells = row.querySelectorAll('td');
+        if (cells.length >= 4) {
+          line('- ' + cells[0].textContent.trim() + ' | ' + cells[2].textContent.trim() + ' | ' + cells[3].textContent.trim(), 6);
+        }
+      });
+
+      y += 4;
+      line('Instructions:', 7);
+      var instructions = document.querySelectorAll('#hall-ticket-instructions li');
+      instructions.forEach(function (item) {
+        line('- ' + item.textContent.trim(), 6);
+      });
+
+      var seat = ((document.getElementById('pdf-seat-number') || {}).textContent || 'hall_ticket').trim();
+      doc.save(seat + '_hall_ticket.pdf');
+    });
+  })();
+</script>
+{% endblock %}

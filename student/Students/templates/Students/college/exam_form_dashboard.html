@@ -1,0 +1,78 @@
+{% extends 'Students/base.html' %}
+
+{% block title %}Exam Form Dashboard | {{ college_name }}{% endblock %}
+
+{% block extra_css %}
+<style>
+  .dash-shell { display: grid; grid-template-columns: 280px 1fr; min-height: 70vh; }
+  .dash-side { background: #121a29; color: #b6c2d6; padding: 24px; }
+  .dash-side .brand { color: #fff; font-weight: 700; margin-bottom: 24px; }
+  .dash-main { background: #f0f0f0; padding: 24px; }
+  .dash-panel {
+    background: #fff;
+    border: 1px solid #d8d8d8;
+    padding: 24px;
+  }
+  .dash-title { margin-bottom: 14px; border-bottom: 1px dashed #d7d7d7; padding-bottom: 10px; }
+  .status-green { color: #0a8a0a; font-weight: 700; }
+  @media (max-width: 991px) {
+    .dash-shell { grid-template-columns: 1fr; }
+  }
+</style>
+{% endblock %}
+
+{% block content %}
+<div class="dash-shell">
+  <aside class="dash-side">
+    <div class="brand">SAVITRIBAI PHULE<br>PUNE UNIVERSITY</div>
+    <a href="{% url 'students:college_exam_portal' %}" class="btn btn-outline-light w-100">Back to Portal</a>
+  </aside>
+
+  <section class="dash-main">
+    <div class="dash-panel">
+      <h2 class="dash-title">Online Exam Form Dashboard</h2>
+
+      <h3 class="h4 mb-3">Instructions</h3>
+      <ul>
+        <li>Only one active application is recommended for the same exam session.</li>
+        <li>Print option is available after successful completion and approval flow.</li>
+        <li>Verify your exam form details carefully before final submit.</li>
+      </ul>
+
+      <h4 class="h5 mt-4">Exam Form Details</h4>
+      <div class="table-responsive">
+        <table class="table table-bordered align-middle">
+          <thead class="table-light">
+            <tr>
+              <th>Sr.No.</th>
+              <th>App-ID</th>
+              <th>Course Name</th>
+              <th>Application Status</th>
+              <th>Submitted At</th>
+              <th>Action</th>
+            </tr>
+          </thead>
+          <tbody>
+            {% for sub in submissions %}
+            <tr>
+              <td>{{ forloop.counter }}</td>
+              <td>{{ sub.id }}</td>
+              <td>{{ sub.student.course }}</td>
+              <td class="status-green">Complete</td>
+              <td>{{ sub.submitted_at|date:"d/m/Y H:i" }}</td>
+              <td><a href="{% url 'students:college_exam_form_fill' %}" class="btn btn-sm btn-outline-primary">Edit/New</a></td>
+            </tr>
+            {% empty %}
+            <tr>
+              <td colspan="6" class="text-center text-body-secondary">No application created yet.</td>
+            </tr>
+            {% endfor %}
+          </tbody>
+        </table>
+      </div>
+
+      <a href="{% url 'students:college_exam_form_fill' %}" class="btn btn-primary btn-lg mt-2">Create New Application</a>
+    </div>
+  </section>
+</div>
+{% endblock %}

@@ -15,9 +15,9 @@ from .models import (
 
 @admin.register(Student)
 class StudentAdmin(admin.ModelAdmin):
-	list_display = ('id', 'first_name', 'last_name', 'email', 'course', 'gpa', 'is_active', 'enrollment_date')
+	list_display = ('id', 'seat_number', 'first_name', 'last_name', 'date_of_birth', 'email', 'course', 'gpa', 'is_active', 'enrollment_date')
 	list_display_links = ('id', 'first_name')
-	search_fields = ('first_name', 'last_name', 'email', 'course')
+	search_fields = ('seat_number', 'first_name', 'last_name', 'email', 'course')
 	list_filter = ('is_active', 'course')
 	ordering = ('-enrollment_date', 'last_name')
 

@@ -1,0 +1,52 @@
+{% extends 'Students/base.html' %}
+
+{% block title %}Exam Student Dashboard | {{ college_name }}{% endblock %}
+
+{% block content %}
+<div class="card border-0 shadow-sm">
+  <div class="card-header text-center bg-light">
+    <h1 class="h3 mb-0">Dashboard</h1>
+  </div>
+  <div class="card-body">
+    <div class="table-responsive">
+      <table class="table table-bordered align-middle">
+        <thead class="table-info">
+          <tr>
+            <th>Learning Mode</th>
+            <th>Course Enrollment</th>
+            <th>College Information</th>
+            <th>Personal Information</th>
+            <th>Profile Status</th>
+            <th>Action</th>
+          </tr>
+        </thead>
+        <tbody>
+          {% for row in demo_rows %}
+          <tr>
+            <td>{{ row.learning_mode }}</td>
+            <td>
+              <strong>PRN Number:</strong> {{ row.prn }}<br>
+              <strong>Eligibility Number:</strong> {{ row.eligibility }}<br>
+              <strong>Course Name:</strong> {{ row.course_name }}<br>
+              <strong>Pattern Name:</strong> {{ row.pattern_name }}
+            </td>
+            <td>
+              <strong>College Puncode:</strong> {{ row.college_puncode }}<br>
+              <strong>College Name:</strong> {{ row.college_name }}
+            </td>
+            <td>
+              <strong>Student Name:</strong> {{ row.student_name }}<br>
+              <strong>Mother Name:</strong> {{ row.mother_name }}
+            </td>
+            <td class="text-success">{{ row.profile_status }}</td>
+            <td class="text-center">
+              <a href="{% url 'students:college_exam_portal' %}" class="btn btn-outline-primary">Exam Form</a>
+            </td>
+          </tr>
+          {% endfor %}
+        </tbody>
+      </table>
+    </div>
+  </div>
+</div>
+{% endblock %}

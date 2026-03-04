@@ -16,6 +16,7 @@
           <th>Course</th>
           <th>Academic Year</th>
           <th>Admission Fee</th>
+          <th>Exam Fees</th>
           <th>First Sem</th>
           <th>Second Sem</th>
           <th>Third Sem</th>
@@ -31,6 +32,7 @@
           <td>{{ row.structure.course }}</td>
           <td>{{ row.structure.academic_year }}</td>
           <td>{{ row.admission_fee|floatformat:2 }}</td>
+          <td>{{ row.exam_fee|floatformat:2 }}</td>
           <td>{{ row.first_sem|floatformat:2 }}</td>
           <td>{{ row.second_sem|floatformat:2 }}</td>
           <td>{{ row.third_sem|floatformat:2 }}</td>
@@ -46,7 +48,7 @@
         </tr>
         {% empty %}
         <tr>
-          <td colspan="10" class="text-center py-4 text-body-secondary">No fee structures found.</td>
+          <td colspan="11" class="text-center py-4 text-body-secondary">No fee structures found.</td>
         </tr>
         {% endfor %}
       </tbody>

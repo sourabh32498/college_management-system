@@ -1,0 +1,100 @@
+{% extends 'Students/base.html' %}
+
+{% block title %}Exam Form Online | {{ college_name }}{% endblock %}
+
+{% block extra_css %}
+<style>
+  .portal-wrap { background: #efefef; padding: 14px; border-radius: 8px; }
+  .portal-header {
+    background: linear-gradient(90deg, #f3f3f3, #e7e7e7);
+    border: 1px solid #ddd;
+    padding: 14px 22px;
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    margin-bottom: 18px;
+  }
+  .portal-brand { font-size: 34px; font-weight: 700; line-height: 1; color: #2b2b2b; }
+  .portal-online { font-size: 36px; letter-spacing: 1px; color: #6a6f75; font-family: Georgia, serif; }
+  .portal-nav {
+    background: #f7f7f7;
+    border: 1px solid #ddd;
+    box-shadow: 0 8px 20px rgba(45, 72, 120, 0.18);
+    padding: 14px 18px;
+    margin-bottom: 18px;
+  }
+  .portal-nav a { margin-right: 24px; color: #2a66a8; text-decoration: none; font-size: 28px; }
+  .portal-card {
+    border: 1px solid #9eb9da;
+    border-radius: 26px;
+    background: #f8f9fb;
+    box-shadow: 0 8px 16px rgba(67, 100, 143, 0.18);
+    padding: 20px 26px;
+    margin-bottom: 16px;
+  }
+  .portal-card h3 { margin-bottom: 10px; color: #3c3c3c; }
+  .proceed-box { display: flex; align-items: center; justify-content: center; min-height: 170px; }
+  .proceed-btn {
+    min-width: 230px;
+    font-size: 34px;
+    font-style: italic;
+    padding: 8px 22px;
+    border-radius: 4px;
+  }
+  .portal-grid { display: grid; grid-template-columns: 1.2fr 0.8fr; gap: 14px; }
+  @media (max-width: 991px) {
+    .portal-grid { grid-template-columns: 1fr; }
+  }
+</style>
+{% endblock %}
+
+{% block content %}
+<div class="portal-wrap">
+  <div class="portal-header">
+    <div class="portal-brand">SAVITRIBAI PHULE<br>PUNE UNIVERSITY</div>
+    <div class="portal-online">EXAM FORM ONLINE</div>
+  </div>
+
+  <div class="portal-nav">
+    <a href="#">FAQs</a>
+    <a href="#">User Manual</a>
+    <a href="#">Exam Form Dates</a>
+  </div>
+
+  <div class="portal-grid">
+    <div>
+      <div class="portal-card">
+        <h3>Contact</h3>
+        <ul class="mb-0">
+          <li>{{ support_phone }}</li>
+          <li>{{ support_email }}</li>
+        </ul>
+      </div>
+
+      <div class="portal-card">
+        <h3>Notifications</h3>
+        <ul class="mb-0">
+          {% for note in notices %}
+          <li>{{ note }}</li>
+          {% endfor %}
+        </ul>
+      </div>
+
+      <div class="portal-card">
+        <h3>Rules</h3>
+        <ul class="mb-0">
+          {% for rule in rules %}
+          <li>{{ rule }}</li>
+          {% endfor %}
+        </ul>
+      </div>
+    </div>
+
+    <div>
+      <div class="portal-card proceed-box">
+        <a href="{% url 'students:college_exam_dashboard' %}" class="btn btn-primary proceed-btn">Proceed</a>
+      </div>
+    </div>
+  </div>
+</div>
+{% endblock %}

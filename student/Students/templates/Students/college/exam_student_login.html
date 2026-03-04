@@ -1,0 +1,94 @@
+{% extends 'Students/base.html' %}
+
+{% block title %}Student Log In | {{ college_name }}{% endblock %}
+
+{% block content %}
+<div class="card border-0 shadow-sm">
+  <div class="card-header text-center bg-light">
+    <h1 class="h3 mb-0">Student Log In</h1>
+  </div>
+  <div class="card-body">
+    {% if lookup_error %}
+    <div class="alert alert-warning">{{ lookup_error }}</div>
+    {% endif %}
+
+    <div class="alert alert-primary">
+      <h2 class="h4">Instructions</h2>
+      <ul class="mb-0">
+        <li>Use previous session username and password for login.</li>
+        <li>Only one account per student is allowed.</li>
+      </ul>
+      <hr>
+      <div><strong>Support Mobile:</strong> {{ support_phone }}</div>
+      <div><strong>Support Email:</strong> {{ support_email }}</div>
+    </div>
+
+    <form method="post" class="row g-3">
+      {% csrf_token %}
+      <input type="hidden" name="captcha_expected" id="captcha-expected" value="{{ captcha_code }}">
+      <div class="col-12">
+        <label class="form-label">Login By <span class="text-danger">*</span></label>
+        <select class="form-select" name="login_by" required>
+          <option value="">-- Select --</option>
+          <option value="PRN">Mobile No</option>
+          <option value="SeatNumber">Email</option>
+        </select>
+      </div>
+
+      <div class="col-12">
+        <label class="form-label">Mobile Number <span class="text-danger">*</span></label>
+        <input class="form-control" type="text" name="mobile_number" placeholder="Enter Mobile Number" required>
+      </div>
+
+      <div class="col-12">
+        <label class="form-label">Password <span class="text-danger">*</span></label>
+        <input class="form-control" type="password" name="password" placeholder="Enter Password" required>
+      </div>
+
+      
+
+      <div class="col-md-6">
+        <label class="form-label">Captcha</label>
+        <div class="border rounded p-3 bg-light d-flex justify-content-between align-items-center">
+          <strong id="captcha-code" style="font-size: 2rem; letter-spacing: 3px;">{{ captcha_code }}</strong>
+          <button type="button" class="btn btn-outline-primary btn-sm" id="refresh-captcha-btn">Refresh Captcha</button>
+        </div>
+      </div>
+      <div class="col-md-6">
+        <label class="form-label">Enter captcha text as shown in image <span class="text-danger">*</span></label>
+        <input class="form-control" type="text" name="captcha_text" placeholder="Enter Captcha Text" required>
+      </div>
+
+      <div class="col-md-6 d-grid">
+        <button type="submit" class="btn btn-info btn-lg text-white">Log In</button>
+      </div>
+      <div class="col-md-6 d-grid">
+        <a href="{% url 'students:home' %}" class="btn btn-secondary btn-lg">Cancel</a>
+      </div>
+    </form>
+  </div>
+</div>
+
+<script>
+  (function () {
+    var refreshBtn = document.getElementById('refresh-captcha-btn');
+    var captchaText = document.getElementById('captcha-code');
+    var captchaExpected = document.getElementById('captcha-expected');
+    if (!refreshBtn || !captchaText || !captchaExpected) return;
+
+    function generateCaptcha() {
+      var value = '';
+      for (var i = 0; i < 5; i += 1) {
+        value += Math.floor(Math.random() * 10);
+      }
+      return value;
+    }
+
+    refreshBtn.addEventListener('click', function () {
+      var newCaptcha = generateCaptcha();
+      captchaText.textContent = newCaptcha;
+      captchaExpected.value = newCaptcha;
+    });
+  })();
+</script>
+{% endblock %}

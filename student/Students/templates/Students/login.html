@@ -11,12 +11,14 @@
           <h1 class="h4 mb-2">College Website</h1>
           <p class="text-body-secondary mb-3">First explore public college information. Login is required only for internal student-management pages.</p>
           <div class="d-flex gap-2 flex-wrap">
-            <a href="{% url 'students:college_home' %}" class="btn btn-outline-primary">Open College Website</a>
+            <a href="{% url 'students:home' %}" class="btn btn-outline-primary">Open Home</a>
             <a href="{% url 'students:college_courses' %}" class="btn btn-outline-secondary">Courses</a>
             <a href="{% url 'students:college_admissions' %}" class="btn btn-outline-secondary">Admissions</a>
+            <a href="{% url 'students:college_hall_ticket' %}" class="btn btn-outline-secondary">Hall Ticket</a>
             <a href="{% url 'students:college_results' %}" class="btn btn-outline-secondary">Online Results</a>
             <a href="{% url 'students:college_contact' %}" class="btn btn-outline-secondary">Contact</a>
           </div>
+          <p class="text-body-secondary small mt-2 mb-0">Use Hall Ticket to view UniPune hall ticket details by seat number and print it.</p>
         </div>
       </div>
     </div>
